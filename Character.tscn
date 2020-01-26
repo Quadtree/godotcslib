@@ -8,6 +8,7 @@ height = 2.0
 
 [node name="KinematicBody" type="KinematicBody"]
 script = ExtResource( 1 )
+MaxSlopeAngle = 60.0
 
 [node name="Rotation_Helper" type="Spatial" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.78032, 0 )

@@ -95,8 +95,6 @@ public class Character : KinematicBody
         _dir.y = 0;
         _dir = _dir.Normalized();
 
-        _vel.y += delta * Gravity;
-
         Vector3 hvel = _vel;
         hvel.y = 0;
 
@@ -112,8 +110,10 @@ public class Character : KinematicBody
 
         hvel = hvel.LinearInterpolate(target, accel * delta);
         _vel.x = hvel.x;
+        _vel.y = -9.8f;
         _vel.z = hvel.z;
-        _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+        _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -2, 0), new Vector3(0, 1, 0), true, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+        //_vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
     }
 
     public override void _Input(InputEvent @event)
