@@ -29,6 +29,8 @@ public class Character : KinematicBody
     private Camera _camera;
     private Spatial _rotationHelper;
 
+    private float JumpTimer = 0;
+
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
@@ -74,7 +76,11 @@ public class Character : KinematicBody
         if (IsOnFloor())
         {
             if (Input.IsActionJustPressed("movement_jump"))
+            {
                 _vel.y = JumpSpeed;
+                JumpTimer = 0.5f;
+                Console.WriteLine($"ALEZOUP");
+            }
         }
         //  -------------------------------------------------------------------
 
@@ -110,15 +116,16 @@ public class Character : KinematicBody
 
         hvel = hvel.LinearInterpolate(target, accel * delta);
         _vel.x = hvel.x;
-        //if (!IsOnFloor())
-            _vel.y = -9.8f;
-        //else
-        //    _vel.y = 0.0f;
+        _vel.y -= 9.8f * delta;
         _vel.z = hvel.z;
 
-        Console.WriteLine($"IsOnFloor={IsOnFloor()} _vel={_vel}");
-        _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -3, 0), new Vector3(0, 1, 0), true, 4, Mathf.Deg2Rad(MaxSlopeAngle));
-        //_vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+        JumpTimer -= delta;
+
+        //Console.WriteLine($"IsOnFloor={IsOnFloor()} _vel={_vel} JumpTimer={JumpTimer}");
+        //if (JumpTimer <= 0.01f)
+            _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -4, 0), new Vector3(0, 1, 0), true, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+        //else
+        //    _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
     }
 
     public override void _Input(InputEvent @event)
