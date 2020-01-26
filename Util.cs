@@ -64,13 +64,13 @@ public static class Util
         );
     }
 
-    public static T FindChildByPredicate<T>(this Node node, Predicate<T> predicate) where T : Node
+    public static T FindChildByPredicate<T>(this Node node, Predicate<T> predicate) where T : class
     {
         foreach (var n in node.GetChildren().ToList<Node>())
         {
             if (n is T)
             {
-                if (predicate.Invoke((T)n)) return (T)n;
+                if (predicate.Invoke((T)(object)n)) return (T)(object)n;
             }
 
             var ret = n.FindChildByPredicate<T>(predicate);
@@ -80,13 +80,13 @@ public static class Util
         return null;
     }
 
-    public static T FindChildByType<T>(this Node node) where T : Node
+    public static T FindChildByType<T>(this Node node) where T : class
     {
         foreach (var n in node.GetChildren().ToList<Node>())
         {
             if (n is T)
             {
-                return (T)n;
+                return (T)(object)n;
             }
 
             var ret = n.FindChildByType<T>();
@@ -435,6 +435,6 @@ public static class Util
 
     public static void CRPC(this Node node, string methodName, params object[] parameters)
     {
-        node.GetTree().Root.FindChildByType<NetworkController>().SendCRPC(node, methodName, parameters);
+        node.GetTree().Root.FindChildByType<ICRPCSender>().SendCRPC(node, methodName, parameters);
     }
 }
