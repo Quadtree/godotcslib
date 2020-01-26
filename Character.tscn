@@ -2,8 +2,7 @@
 
 [ext_resource path="res://godot-utils/Character.cs" type="Script" id=1]
 
-[sub_resource type="CylinderShape" id=3]
-radius = 0.15
+[sub_resource type="RayShape" id=3]
 
 [sub_resource type="CapsuleShape" id=2]
 radius = 0.5
@@ -20,8 +19,20 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.78032, 0 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.2001, 0 )
 current = true
 
-[node name="RayCollisionShape" type="CollisionShape" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.988163, 0 )
+[node name="Ray1" type="CollisionShape" parent="."]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0.15, 1, 0.15 )
+shape = SubResource( 3 )
+
+[node name="Ray2" type="CollisionShape" parent="."]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0.15, 1, -0.15 )
+shape = SubResource( 3 )
+
+[node name="Ray3" type="CollisionShape" parent="."]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, -0.15, 1, 0.15 )
+shape = SubResource( 3 )
+
+[node name="Ray4" type="CollisionShape" parent="."]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, -0.15, 1, -0.15 )
 shape = SubResource( 3 )
 
 [node name="BodyCollisionShape" type="CollisionShape" parent="."]
