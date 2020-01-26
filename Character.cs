@@ -121,7 +121,7 @@ public class Character : KinematicBody
         if (@event is InputEventMouseMotion && Input.GetMouseMode() == Input.MouseMode.Captured)
         {
             InputEventMouseMotion mouseEvent = @event as InputEventMouseMotion;
-            _rotationHelper.RotateX(Mathf.Deg2Rad(mouseEvent.Relative.y * MouseSensitivity));
+            _rotationHelper.RotateX(Mathf.Deg2Rad(-mouseEvent.Relative.y * MouseSensitivity));
             RotateY(Mathf.Deg2Rad(-mouseEvent.Relative.x * MouseSensitivity));
 
             Vector3 cameraRot = _rotationHelper.RotationDegrees;
