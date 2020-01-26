@@ -110,9 +110,14 @@ public class Character : KinematicBody
 
         hvel = hvel.LinearInterpolate(target, accel * delta);
         _vel.x = hvel.x;
-        _vel.y = -9.8f;
+        if (!IsOnFloor())
+            _vel.y = -9.8f;
+        else
+            _vel.y = 0;
         _vel.z = hvel.z;
-        _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -2, 0), new Vector3(0, 1, 0), true, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+
+        Console.WriteLine($"IsOnFloor={IsOnFloor()} _vel={_vel}");
+        if (_vel.Length() >= 0.01f || !IsOnFloor()) _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -2, 0), new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
         //_vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
     }
 
