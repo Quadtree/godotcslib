@@ -2,9 +2,8 @@
 
 [ext_resource path="res://godot-utils/Character.cs" type="Script" id=1]
 
-[sub_resource type="CapsuleShape" id=1]
-radius = 0.8
-height = 2.0
+[sub_resource type="RayShape" id=1]
+length = 2.0
 
 [node name="KinematicBody" type="KinematicBody"]
 script = ExtResource( 1 )
