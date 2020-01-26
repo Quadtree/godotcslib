@@ -8,7 +8,10 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 
-public class NetworkController : Node
+public class NetworkController<T, R, F> : Node
+    where T : Node, IReplicable<R>
+    where R : IReplicationData
+    where F : IReplicableFactory<R>, new()
 {
     // Declare member variables here. Examples:
     // private int a = 2;
@@ -76,28 +79,6 @@ public class NetworkController : Node
             if (parts.Length == 1 && parts[0] == "--test")
             {
                 Console.WriteLine("Unexpected number of command line args");
-
-                /*var rd = new ReplicationData();
-                rd.Id = 700;
-                rd.Pos = new Vector2(20, 80);
-
-                Console.WriteLine($"Test: {Util.ObjToBytes(rd).ToHex()}");
-
-                var rd2 = Util.BytesToObj<ReplicationData>(Util.ObjToBytes(rd));
-
-                Console.WriteLine($"Test: {rd2.Id} {rd2.Pos.x} {rd2.Pos.y}");
-
-                var rda = new List<ReplicationData>(){rd};
-
-                Console.WriteLine($"Test Array: {Util.ObjToBytes(rda).ToHex()}");
-
-                var rda2 = Util.BytesToObj<List<ReplicationData>>(Util.ObjToBytes(rda));
-
-                Console.WriteLine($"Test Array: {rda2[0].Id} {rda2[0].Pos.x} {rda2[0].Pos.y}");*/
-
-                MethodInfo mi = typeof(PlayerCharacter).GetMethod("ReceiveDestination", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-
-                Console.WriteLine($"mi={mi}");
 
                 byte[][] byteArray1 = new byte[2][];
                 byteArray1[0]=new byte[]{1,2,3};
@@ -205,13 +186,11 @@ public class NetworkController : Node
             //var chrRes = ResourceLoader.Load("res://actors/PlayerCharacter.tscn");
             //Console.WriteLine($"chrRes={chrRes}");
 
-            var newPC = PCType.Instance() as PlayerCharacter;
+            var newPC = PCType.Instance() as T;
             GetTree().Root.AddChild(newPC);
 
             Random rand = new Random();
 
-            newPC.Position = new Vector2(1713 + rand.Next(-40, 40), 1431.66f);
-            newPC.Destination = newPC.Position;
             newPC.SetNetworkMaster(id);
             newPC.Id = id;
             newPC.Init();
@@ -223,7 +202,7 @@ public class NetworkController : Node
         Console.WriteLine($"NetworkPeerDisconnected() {id}");
         ServerConnectedClients.Remove(id);
 
-        var leavingPC = GetTree().Root.FindChildByPredicate<PlayerCharacter>(it => it.Id == id);
+        var leavingPC = GetTree().Root.FindChildByPredicate<T>(it => it.Id == id);
 
         if (leavingPC != null) leavingPC.QueueFree();
     }
@@ -238,13 +217,13 @@ public class NetworkController : Node
             if (NetUpdateAccum >= 0.1f && ServerConnectedClients.Count > 0)
             {
                 NetUpdateAccum = 0;
-                var msg = new List<ReplicationData>();
+                var msg = new List<R>();
 
                 foreach (var n in GetTree().Root.GetChildren())
                 {
-                    if (n is IReplicable)
+                    if (n is IReplicable<R>)
                     {
-                        msg.Add((n as IReplicable).GetReplicationData());
+                        msg.Add((n as IReplicable<R>).GetReplicationData());
                     }
                 }
 
@@ -278,7 +257,7 @@ public class NetworkController : Node
 
         try
         {
-            var data = Util.BytesToObj<List<ReplicationData>>(rawData);
+            var data = Util.BytesToObj<List<R>>(rawData);
 
             //var parts = String.Join(", ", data.Select(it => $"[{it[0]} {it[1]}]"));
 
@@ -287,7 +266,7 @@ public class NetworkController : Node
             var activeIds = new HashSet<int>(data.Select(it => it.Id));
 
             var existingIds = GetTree().Root.GetChildren().ToList<Node>()
-                .Select(it => it as IReplicable)
+                .Select(it => it as IReplicable<R>)
                 .Where(it => it != null)
                 .Select(it => it.Id)
                 .ToHashSet();
@@ -296,20 +275,13 @@ public class NetworkController : Node
 
             foreach (var c in toCreate)
             {
-                IReplicable newPC = null;
-
                 var curDataChunk = data.Find(it => it.Id == c);
-                var curType = curDataChunk.Type;
 
-                switch (curType)
-                {
-                    case ReplicableType.PC: newPC = PCType.Instance() as IReplicable; break;
-                    case ReplicableType.Monster: newPC = MonsterType.Instance() as IReplicable; break;
-                    default: Console.WriteLine($"Unexpected curType {curType}"); break;
-                }
+                var factory = new F();
+
+                var newPC = factory.CreateFrom(GetTree().Root, curDataChunk);
 
                 newPC.SetReplicationData(curDataChunk);
-
 
                 GetTree().Root.AddChild(newPC as Node);
             }
@@ -317,7 +289,7 @@ public class NetworkController : Node
             foreach (var dataChunk in data)
             {
                 GetTree().Root.GetChildren().ToList<Node>()
-                    .Select(it => it as IReplicable)
+                    .Select(it => it as IReplicable<R>)
                     .Where(it => it != null)
                     .Where(it => it.Id == dataChunk.Id)
                     .First()
@@ -327,7 +299,7 @@ public class NetworkController : Node
             foreach (var c in existingIds.Except(activeIds))
             {
                 ((Node)GetTree().Root.GetChildren().ToList<Node>()
-                    .Select(it => it as IReplicable)
+                    .Select(it => it as IReplicable<R>)
                     .Where(it => it != null)
                     .Where(it => it.Id == c)
                     .First())
@@ -336,15 +308,6 @@ public class NetworkController : Node
         } catch (Exception ex) {
             Console.WriteLine($"EX: {ex}");
         }
-    }
-
-    [Remote]
-    public void ReceiveChatMessage(string chatMessage)
-    {
-        Console.WriteLine($"Received chat message: {chatMessage}");
-
-        var inGameUI = GetTree().Root.FindChildByType<InGameUI>();
-        inGameUI?.AddChatMessageToHistory(GetTree().Root.FindChildByPredicate<PlayerCharacter>(it => it.Id == GetTree().GetRpcSenderId()).CharacterName, chatMessage);
     }
 
     /**
