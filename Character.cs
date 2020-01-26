@@ -110,10 +110,10 @@ public class Character : KinematicBody
 
         hvel = hvel.LinearInterpolate(target, accel * delta);
         _vel.x = hvel.x;
-        if (!IsOnFloor())
-            _vel.y = 0.0f;
-        else
-            _vel.y = 0.0f;
+        //if (!IsOnFloor())
+            _vel.y = -9.8f;
+        //else
+        //    _vel.y = 0.0f;
         _vel.z = hvel.z;
 
         Console.WriteLine($"IsOnFloor={IsOnFloor()} _vel={_vel}");
