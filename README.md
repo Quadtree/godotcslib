@@ -4,6 +4,17 @@
 git submodule 'git@github.com:Quadtree/godotcslib.git' cslib
 ```
 
+## Updating
+
+```
+git pull --recurse-submodules
+```
+
+## Initializing after Clone
+```
+git submodule update --init
+```
+
 ## Standard Input Setup
 
 ```
