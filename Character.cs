@@ -164,15 +164,22 @@ public class Character : KinematicBody
 
             float heightAboveGround = ourHeight - highestGroundPoint;
 
-            Console.WriteLine($"heightAboveGround={heightAboveGround}");
+            //Console.WriteLine($"(heightAboveGround / Mathf.Abs(heightAboveGround))={(heightAboveGround / Mathf.Abs(heightAboveGround))} (_vel.y / Mathf.Abs(_vel.y))={(_vel.y / Mathf.Abs(_vel.y))}");
 
-            if (Mathf.Abs(heightAboveGround) < 0.5f)
+            if (true || Mathf.Abs(heightAboveGround) < 1f && (Mathf.Abs((heightAboveGround / Mathf.Abs(heightAboveGround)) - (_vel.y / Mathf.Abs(_vel.y))) < 1 || IsOnGround))
             {
                 // we are supposed to be glued to the ground
-                //Translation -= new Vector3(0, heightAboveGround, 0);
+                Console.WriteLine($"GLUED heightAboveGround={heightAboveGround}");
+                Translation -= new Vector3(0, heightAboveGround, 0);
                 IsOnGround = true;
-                _vel.y = -heightAboveGround * 100;
+                _vel.y = 0;
+                //_vel.y = -heightAboveGround * 100;
+            } else {
+                IsOnGround = false;
+                Console.WriteLine($"FLYING heightAboveGround={heightAboveGround} _vel.y={_vel.y}");
             }
+        } else {
+            IsOnGround = false;
         }
     }
 
