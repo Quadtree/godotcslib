@@ -124,11 +124,11 @@ public class Character : KinematicBody
 
         JumpTimer -= delta;
 
-        Console.WriteLine($"IsOnFloor={IsOnFloor()} _vel={_vel} JumpTimer={JumpTimer}");
+        //Console.WriteLine($"IsOnFloor={IsOnFloor()} _vel={_vel} JumpTimer={JumpTimer}");
         //if (JumpTimer <= 0.01f)
-            _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -40, 0), new Vector3(0, 1, 0), true, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+        //    _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -40, 0), new Vector3(0, 1, 0), true, 4, Mathf.Deg2Rad(MaxSlopeAngle));
         //else
-        //    _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+            _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
     }
 
     public override void _Input(InputEvent @event)
