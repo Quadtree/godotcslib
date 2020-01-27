@@ -8,8 +8,8 @@ height = 0.7
 
 [node name="KinematicBody" type="KinematicBody"]
 script = ExtResource( 1 )
-MaxSpeed = 4.0
-JumpSpeed = 8.0
+MaxSpeed = 6.0
+JumpSpeed = 4.5
 MaxSlopeAngle = 60.0
 
 [node name="BodyCollisionShape" type="CollisionShape" parent="."]

@@ -115,25 +115,16 @@ public class Character : KinematicBody
         else
             accel = Deaccel;
 
-        if (!IsOnGround) accel *= 0.2f;
+        if (!IsOnGround) accel *= 0.05f;
 
         hvel = hvel.LinearInterpolate(target, accel * delta);
         _vel.x = hvel.x;
-        //if (!IsOnFloor())
-            _vel.y -= 9.8f * delta;
-        //else
-        //    _vel.y = -40;
+        _vel.y -= 9.8f * delta;
         _vel.z = hvel.z;
 
         if (_vel.y < 0) IsJumping = false;
 
-        //Console.WriteLine($"IsOnFloor={IsOnFloor()} _vel={_vel} JumpTimer={JumpTimer}");
-        //if (JumpTimer <= 0.01f)
-        //    _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -40, 0), new Vector3(0, 1, 0), true, 4, Mathf.Deg2Rad(MaxSlopeAngle));
-        //else
         _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
-
-        //Console.WriteLine($"Speed={_vel.Length()}");
 
         if (!IsJumping)
         {
@@ -164,19 +155,14 @@ public class Character : KinematicBody
 
             float heightAboveGround = ourHeight - highestGroundPoint;
 
-            //Console.WriteLine($"(heightAboveGround / Mathf.Abs(heightAboveGround))={(heightAboveGround / Mathf.Abs(heightAboveGround))} (_vel.y / Mathf.Abs(_vel.y))={(_vel.y / Mathf.Abs(_vel.y))}");
-
             if (Mathf.Abs(heightAboveGround) < 1f && (Mathf.Abs((heightAboveGround / Mathf.Abs(heightAboveGround)) - (_vel.y / Mathf.Abs(_vel.y))) < 1 || IsOnGround))
             {
                 // we are supposed to be glued to the ground
-                //Console.WriteLine($"GLUED heightAboveGround={heightAboveGround}");
                 Translation -= new Vector3(0, heightAboveGround, 0);
                 IsOnGround = true;
                 _vel.y = 0;
-                //_vel.y = -heightAboveGround * 100;
             } else {
                 IsOnGround = false;
-                //Console.WriteLine($"FLYING heightAboveGround={heightAboveGround} _vel.y={_vel.y}");
             }
         } else {
             IsOnGround = false;
