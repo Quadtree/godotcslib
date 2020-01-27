@@ -128,7 +128,36 @@ public class Character : KinematicBody
         //if (JumpTimer <= 0.01f)
         //    _vel = MoveAndSlideWithSnap(_vel, new Vector3(0, -40, 0), new Vector3(0, 1, 0), true, 4, Mathf.Deg2Rad(MaxSlopeAngle));
         //else
-            _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+        _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
+
+        float highestGroundPoint = -10000;
+
+        for (int i=0;i<4;++i)
+        {
+            var rayDelta = new Vector3(0.2f * Mathf.Cos(Mathf.Pi / 2 * i), 0, 0.2f * Mathf.Sin(Mathf.Pi / 2 * i));
+            var rayStart = Translation + rayDelta + new Vector3(0, 2, 0);
+            var rayEnd = rayStart + new Vector3(0, -4, 0);
+
+            var ret = GetWorld().DirectSpaceState.IntersectRay(rayStart, rayEnd, new Godot.Collections.Array(){GetRid()});
+            if (ret.Count > 0)
+            {
+                var intersectPoint = (Vector3)ret["position"];
+
+                highestGroundPoint = Mathf.Max(highestGroundPoint, intersectPoint.y);
+            }
+        }
+
+        float ourHeight = Translation.y;
+
+        float heightAboveGround = ourHeight - highestGroundPoint;
+
+        Console.WriteLine($"heightAboveGround={heightAboveGround}");
+
+        if (Mathf.Abs(heightAboveGround) < 1)
+        {
+            // we are supposed to be glued to the ground
+            Translation -= new Vector3(0, heightAboveGround, 0);
+        }
     }
 
     public override void _Input(InputEvent @event)
