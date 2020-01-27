@@ -87,13 +87,13 @@ public class Character : KinematicBody
 
         //  -------------------------------------------------------------------
         //  Capturing/Freeing the cursor
-        if (Input.IsActionJustPressed("ui_cancel"))
+        /*if (Input.IsActionJustPressed("ui_cancel"))
         {
             if (Input.GetMouseMode() == Input.MouseMode.Visible)
                 Input.SetMouseMode(Input.MouseMode.Captured);
             else
                 Input.SetMouseMode(Input.MouseMode.Visible);
-        }
+        }*/
         //  -------------------------------------------------------------------
     }
 
@@ -169,11 +169,16 @@ public class Character : KinematicBody
         }
     }
 
-    public override void _Input(InputEvent @event)
+    public override void _Input(InputEvent evt)
     {
-        if (@event is InputEventMouseMotion && Input.GetMouseMode() == Input.MouseMode.Captured)
+        if (evt is InputEventMouseButton && Input.GetMouseMode() != Input.MouseMode.Captured)
         {
-            InputEventMouseMotion mouseEvent = @event as InputEventMouseMotion;
+            Input.SetMouseMode(Input.MouseMode.Captured);
+        }
+
+        if (evt is InputEventMouseMotion && Input.GetMouseMode() == Input.MouseMode.Captured)
+        {
+            InputEventMouseMotion mouseEvent = evt as InputEventMouseMotion;
             _rotationHelper.RotateX(Mathf.Deg2Rad(-mouseEvent.Relative.y * MouseSensitivity));
             RotateY(Mathf.Deg2Rad(-mouseEvent.Relative.x * MouseSensitivity));
 
