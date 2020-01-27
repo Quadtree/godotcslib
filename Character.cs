@@ -29,7 +29,8 @@ public class Character : KinematicBody
     private Camera _camera;
     private Spatial _rotationHelper;
 
-    private float JumpTimer = 0;
+    private bool IsJumping = false;
+    private bool IsOnGround = false;
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -73,12 +74,12 @@ public class Character : KinematicBody
 
         //  -------------------------------------------------------------------
         //  Jumping
-        if (IsOnFloor())
+        if (IsOnGround)
         {
             if (Input.IsActionJustPressed("movement_jump"))
             {
                 _vel.y = JumpSpeed;
-                JumpTimer = 0.5f;
+                IsJumping = true;
                 Console.WriteLine($"ALEZOUP");
             }
         }
@@ -122,7 +123,7 @@ public class Character : KinematicBody
         //    _vel.y = -40;
         _vel.z = hvel.z;
 
-        JumpTimer -= delta;
+        if (_vel.y < 0) IsJumping = false;
 
         //Console.WriteLine($"IsOnFloor={IsOnFloor()} _vel={_vel} JumpTimer={JumpTimer}");
         //if (JumpTimer <= 0.01f)
@@ -130,33 +131,42 @@ public class Character : KinematicBody
         //else
         _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
 
-        float highestGroundPoint = -10000;
-
-        for (int i=0;i<4;++i)
+        if (!IsJumping)
         {
-            var rayDelta = new Vector3(0.2f * Mathf.Cos(Mathf.Pi / 2 * i), 0, 0.2f * Mathf.Sin(Mathf.Pi / 2 * i));
-            var rayStart = Translation + rayDelta + new Vector3(0, 2, 0);
-            var rayEnd = rayStart + new Vector3(0, -4, 0);
+            float highestGroundPoint = -10000;
 
-            var ret = GetWorld().DirectSpaceState.IntersectRay(rayStart, rayEnd, new Godot.Collections.Array(){GetRid()});
-            if (ret.Count > 0)
+            for (int i=0;i<4;++i)
             {
-                var intersectPoint = (Vector3)ret["position"];
+                var rayDelta = new Vector3(0.2f * Mathf.Cos(Mathf.Pi / 2 * i), 0, 0.2f * Mathf.Sin(Mathf.Pi / 2 * i));
+                var rayStart = Translation + rayDelta + new Vector3(0, 2, 0);
+                var rayEnd = rayStart + new Vector3(0, -4, 0);
 
-                highestGroundPoint = Mathf.Max(highestGroundPoint, intersectPoint.y);
+                var ret = GetWorld().DirectSpaceState.IntersectRay(rayStart, rayEnd, new Godot.Collections.Array(){GetRid()});
+                if (ret.Count > 0)
+                {
+                    var intersectPoint = (Vector3)ret["position"];
+
+                    highestGroundPoint = Mathf.Max(highestGroundPoint, intersectPoint.y);
+                }
             }
-        }
 
-        float ourHeight = Translation.y;
+            float ourHeight = Translation.y;
 
-        float heightAboveGround = ourHeight - highestGroundPoint;
+            float heightAboveGround = ourHeight - highestGroundPoint;
 
-        Console.WriteLine($"heightAboveGround={heightAboveGround}");
+            Console.WriteLine($"heightAboveGround={heightAboveGround}");
 
-        if (Mathf.Abs(heightAboveGround) < 1)
-        {
-            // we are supposed to be glued to the ground
-            Translation -= new Vector3(0, heightAboveGround, 0);
+            if (Mathf.Abs(heightAboveGround) < 0.5f)
+            {
+                // we are supposed to be glued to the ground
+                Translation -= new Vector3(0, heightAboveGround, 0);
+                IsOnGround = true;
+                _vel.y = 0;
+            }
+            else
+            {
+                IsOnGround = false;
+            }
         }
     }
 
