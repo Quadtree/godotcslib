@@ -401,6 +401,11 @@ public static class Util
         return (float)rand.NextDouble();
     }
 
+    public static Vector3 GetGlobalLocation(this Spatial node)
+    {
+        return node.GlobalTransform.origin;
+    }
+
     public static void CreateRegularTimer(this Node node, string targetMethodName, float interval, Timer.TimerProcessMode mode = Timer.TimerProcessMode.Idle)
     {
         Timer uploadTimer = new Timer();
