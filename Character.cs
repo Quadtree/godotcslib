@@ -133,6 +133,8 @@ public class Character : KinematicBody
         //else
         _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
 
+        //Console.WriteLine($"Speed={_vel.Length()}");
+
         if (!IsJumping)
         {
             float highestGroundPoint = -10000;
