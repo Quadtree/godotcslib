@@ -133,7 +133,7 @@ public class Character : KinematicBody
             for (int i=0;i<4;++i)
             {
                 var rayDelta = new Vector3(0.2f * Mathf.Cos(Mathf.Pi / 2 * i), 0, 0.2f * Mathf.Sin(Mathf.Pi / 2 * i));
-                var rayStart = Translation + rayDelta + new Vector3(0, 2, 0);
+                var rayStart = ToGlobal(Translation) + rayDelta + new Vector3(0, 2, 0);
                 var rayEnd = rayStart + new Vector3(0, -4, 0);
 
                 var ret = GetWorld().DirectSpaceState.IntersectRay(rayStart, rayEnd, new Godot.Collections.Array(){GetRid()});
@@ -151,9 +151,11 @@ public class Character : KinematicBody
                 }
             }
 
-            float ourHeight = Translation.y;
+            float ourHeight = ToGlobal(Translation).y;
 
             float heightAboveGround = ourHeight - highestGroundPoint;
+
+            Console.WriteLine($"heightAboveGround={heightAboveGround} ourHeight={ourHeight} highestGroundPoint={highestGroundPoint}");
 
             if (Mathf.Abs(heightAboveGround) < 1f && (Mathf.Abs((heightAboveGround / Mathf.Abs(heightAboveGround)) - (_vel.y / Mathf.Abs(_vel.y))) < 1 || IsOnGround))
             {
