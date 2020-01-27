@@ -1,3 +1,9 @@
+## Installation
+
+```
+git submodule 'git@github.com:Quadtree/godotcslib.git' cslib
+```
+
 ## Standard Input Setup
 
 ```
