@@ -133,8 +133,6 @@ public class Character : KinematicBody
         //else
         _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
 
-        IsOnGround = false;
-
         if (!IsJumping)
         {
             float highestGroundPoint = -10000;
@@ -166,17 +164,17 @@ public class Character : KinematicBody
 
             //Console.WriteLine($"(heightAboveGround / Mathf.Abs(heightAboveGround))={(heightAboveGround / Mathf.Abs(heightAboveGround))} (_vel.y / Mathf.Abs(_vel.y))={(_vel.y / Mathf.Abs(_vel.y))}");
 
-            if (true || Mathf.Abs(heightAboveGround) < 1f && (Mathf.Abs((heightAboveGround / Mathf.Abs(heightAboveGround)) - (_vel.y / Mathf.Abs(_vel.y))) < 1 || IsOnGround))
+            if (Mathf.Abs(heightAboveGround) < 1f && (Mathf.Abs((heightAboveGround / Mathf.Abs(heightAboveGround)) - (_vel.y / Mathf.Abs(_vel.y))) < 1 || IsOnGround))
             {
                 // we are supposed to be glued to the ground
-                Console.WriteLine($"GLUED heightAboveGround={heightAboveGround}");
+                //Console.WriteLine($"GLUED heightAboveGround={heightAboveGround}");
                 Translation -= new Vector3(0, heightAboveGround, 0);
                 IsOnGround = true;
                 _vel.y = 0;
                 //_vel.y = -heightAboveGround * 100;
             } else {
                 IsOnGround = false;
-                Console.WriteLine($"FLYING heightAboveGround={heightAboveGround} _vel.y={_vel.y}");
+                //Console.WriteLine($"FLYING heightAboveGround={heightAboveGround} _vel.y={_vel.y}");
             }
         } else {
             IsOnGround = false;
