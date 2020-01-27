@@ -115,6 +115,8 @@ public class Character : KinematicBody
         else
             accel = Deaccel;
 
+        if (!IsOnGround) accel *= 0.2f;
+
         hvel = hvel.LinearInterpolate(target, accel * delta);
         _vel.x = hvel.x;
         //if (!IsOnFloor())
@@ -131,6 +133,8 @@ public class Character : KinematicBody
         //else
         _vel = MoveAndSlide(_vel, new Vector3(0, 1, 0), false, 4, Mathf.Deg2Rad(MaxSlopeAngle));
 
+        IsOnGround = false;
+
         if (!IsJumping)
         {
             float highestGroundPoint = -10000;
@@ -145,8 +149,14 @@ public class Character : KinematicBody
                 if (ret.Count > 0)
                 {
                     var intersectPoint = (Vector3)ret["position"];
+                    var normal = (Vector3)ret["normal"];
 
-                    highestGroundPoint = Mathf.Max(highestGroundPoint, intersectPoint.y);
+                    //Console.WriteLine($"anlge={normal.AngleTo(Vector3.Up)}");
+
+                    if (normal.AngleTo(Vector3.Up) < Mathf.Deg2Rad(MaxSlopeAngle))
+                    {
+                        highestGroundPoint = Mathf.Max(highestGroundPoint, intersectPoint.y);
+                    }
                 }
             }
 
@@ -162,10 +172,6 @@ public class Character : KinematicBody
                 //Translation -= new Vector3(0, heightAboveGround, 0);
                 IsOnGround = true;
                 _vel.y = -heightAboveGround * 100;
-            }
-            else
-            {
-                IsOnGround = false;
             }
         }
     }
