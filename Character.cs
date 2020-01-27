@@ -35,8 +35,8 @@ public class Character : KinematicBody
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        _camera = GetNode<Camera>("Rotation_Helper/Camera");
-        _rotationHelper = GetNode<Spatial>("Rotation_Helper");
+        _camera = GetNode<Camera>("RotationBase/Rotation_Helper/Camera");
+        _rotationHelper = GetNode<Spatial>("RotationBase/Rotation_Helper");
 
         Input.SetMouseMode(Input.MouseMode.Captured);
     }
@@ -159,9 +159,9 @@ public class Character : KinematicBody
             if (Mathf.Abs(heightAboveGround) < 0.5f)
             {
                 // we are supposed to be glued to the ground
-                Translation -= new Vector3(0, heightAboveGround, 0);
+                //Translation -= new Vector3(0, heightAboveGround, 0);
                 IsOnGround = true;
-                _vel.y = 0;
+                _vel.y = -heightAboveGround * 100;
             }
             else
             {

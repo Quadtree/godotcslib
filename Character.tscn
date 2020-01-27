@@ -2,7 +2,7 @@
 
 [ext_resource path="res://godot-utils/Character.cs" type="Script" id=1]
 
-[sub_resource type="CapsuleShape" id=2]
+[sub_resource type="CapsuleShape" id=1]
 radius = 0.5
 height = 0.7
 
@@ -10,13 +10,14 @@ height = 0.7
 script = ExtResource( 1 )
 MaxSlopeAngle = 60.0
 
-[node name="Rotation_Helper" type="Spatial" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.78032, 0 )
-
-[node name="Camera" type="Camera" parent="Rotation_Helper"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.2001, 0 )
-current = true
-
 [node name="BodyCollisionShape" type="CollisionShape" parent="."]
 transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 1.23227, 0 )
-shape = SubResource( 2 )
+shape = SubResource( 1 )
+
+[node name="RotationBase" type="Spatial" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.72411, 0 )
+
+[node name="Rotation_Helper" type="Spatial" parent="RotationBase"]
+
+[node name="Camera" type="Camera" parent="RotationBase/Rotation_Helper"]
+current = true
