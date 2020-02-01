@@ -450,6 +450,21 @@ public static class Util
         node.GetTree().Root.FindChildByType<ICRPCSender>().SendCRPC(node, methodName, parameters);
     }
 
+    public static T FindParentByType<T>(this Node node)
+    {
+        while(true)
+        {
+            var parent = node.GetParentOrNull<Node>();
+
+            if (parent == null) return default(T);
+            if (parent is T)
+            {
+                return (T)(object)node.GetParentOrNull<Node>();
+            }
+            node = parent;
+        }
+    }
+
     public static void SpawnOneShotParticleSystem(PackedScene system, Node contextNode, Vector3 location)
     {
         if (system == null) return;
