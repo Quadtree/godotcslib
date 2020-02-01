@@ -23,6 +23,9 @@ public class Character : KinematicBody
     [Export]
     public float MouseSensitivity = 0.05f;
 
+    [Export]
+    public PackedScene AttachedToCamera;
+
     private Vector3 _vel = new Vector3();
     private Vector3 _dir = new Vector3();
 
@@ -39,6 +42,18 @@ public class Character : KinematicBody
         _rotationHelper = GetNode<Spatial>("RotationBase/Rotation_Helper");
 
         Input.SetMouseMode(Input.MouseMode.Captured);
+
+        CallDeferred(nameof(PostReadySpawn));
+    }
+
+    private void PostReadySpawn()
+    {
+        if (AttachedToCamera != null)
+        {
+            var attached = AttachedToCamera.Instance();
+
+            _camera.AddChild(attached);
+        }
     }
 
     public override void _PhysicsProcess(float delta)
