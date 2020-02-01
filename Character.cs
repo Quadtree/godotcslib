@@ -155,7 +155,7 @@ public class Character : KinematicBody
 
             float heightAboveGround = ourHeight - highestGroundPoint;
 
-            Console.WriteLine($"heightAboveGround={heightAboveGround} ourHeight={ourHeight} highestGroundPoint={highestGroundPoint}");
+            //Console.WriteLine($"heightAboveGround={heightAboveGround} ourHeight={ourHeight} highestGroundPoint={highestGroundPoint}");
 
             if (Mathf.Abs(heightAboveGround) < 1f && (Mathf.Abs((heightAboveGround / Mathf.Abs(heightAboveGround)) - (_vel.y / Mathf.Abs(_vel.y))) < 1 || IsOnGround))
             {
