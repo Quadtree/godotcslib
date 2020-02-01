@@ -406,6 +406,13 @@ public static class Util
         return node.GlobalTransform.origin;
     }
 
+    public static void SetGlobalLocation(this Spatial node, Vector3 globalLocation)
+    {
+        var t = node.GlobalTransform;
+        t.origin = globalLocation;
+        node.GlobalTransform = t;
+    }
+
     public static void CreateRegularTimer(this Node node, string targetMethodName, float interval, Timer.TimerProcessMode mode = Timer.TimerProcessMode.Idle)
     {
         Timer uploadTimer = new Timer();
@@ -441,5 +448,22 @@ public static class Util
     public static void CRPC(this Node node, string methodName, params object[] parameters)
     {
         node.GetTree().Root.FindChildByType<ICRPCSender>().SendCRPC(node, methodName, parameters);
+    }
+
+    public static void SpawnOneShotParticleSystem(PackedScene system, Node contextNode, Vector3 location)
+    {
+        if (system == null) return;
+
+        var particles = (Particles)system.Instance();
+        contextNode.GetTree().Root.AddChild(particles);
+
+        particles.SetGlobalLocation(location);
+
+        particles.OneShot = true;
+        particles.Emitting = true;
+
+        var n = contextNode.GetTree().Root.GetChildren().ToList<Particles>().Count;
+
+        Console.WriteLine($"N={n}");
     }
 }
