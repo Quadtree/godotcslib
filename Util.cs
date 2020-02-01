@@ -462,6 +462,12 @@ public static class Util
         particles.OneShot = true;
         particles.Emitting = true;
 
+        var timer = new Timer();
+        timer.Autostart = true;
+        timer.WaitTime = 5;
+        timer.Connect("timeout", particles, "queue_free");
+        particles.AddChild(timer);
+
         var n = contextNode.GetTree().Root.GetChildren().ToList<Particles>().Count;
 
         Console.WriteLine($"N={n}");
