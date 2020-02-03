@@ -67,7 +67,7 @@ public class Character : KinematicBody
         //  -------------------------------------------------------------------
         //  Walking
         _dir = new Vector3();
-        Transform camXform = _camera.GetGlobalTransform();
+        Transform camXform = _camera.GlobalTransform;
 
         Vector2 inputMovementVector = new Vector2();
 
