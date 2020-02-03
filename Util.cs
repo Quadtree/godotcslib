@@ -447,7 +447,7 @@ public static class Util
 
     public static void CRPC(this Node node, string methodName, params object[] parameters)
     {
-        node.GetTree().Root.FindChildByType<ICRPCSender>().SendCRPC(node, methodName, parameters);
+        node.GetTree().Root.FindChildByType<NetworkController>().SendCRPC(node, methodName, parameters);
     }
 
     public static T FindParentByType<T>(this Node node)
