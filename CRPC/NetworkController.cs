@@ -261,7 +261,8 @@ public class NetworkController : Node
         }
     }
 
-    [Remote]
+    [AllowRemoteServer]
+    [RunOnClients]
     public void ReceiveReplication(byte[] rawData)
     {
         this.AssertSenderIsServer();
