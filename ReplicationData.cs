@@ -2,9 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using Godot.Collections;
 
-public interface IReplicable
+public class ReplicationData
 {
-    int Id {get; set; }
-
-    void Init();
+    public int Id;
 }

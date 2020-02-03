@@ -8,10 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 
-public class NetworkController<T, R, F> : Node
-    where T : Node, IReplicable<R>
-    where R : IReplicationData
-    where F : IReplicableFactory<R>, new()
+public class NetworkController : Node
 {
     // Declare member variables here. Examples:
     // private int a = 2;
@@ -186,14 +183,14 @@ public class NetworkController<T, R, F> : Node
             //var chrRes = ResourceLoader.Load("res://actors/PlayerCharacter.tscn");
             //Console.WriteLine($"chrRes={chrRes}");
 
-            var newPC = PCType.Instance() as T;
+            var newPC = PCType.Instance();
             GetTree().Root.AddChild(newPC);
 
             Random rand = new Random();
 
             newPC.SetNetworkMaster(id);
-            newPC.Id = id;
-            newPC.Init();
+            ((IReplicable)newPC).Id = id;
+            ((IReplicable)newPC).Init();
         }
     }
 
@@ -202,9 +199,9 @@ public class NetworkController<T, R, F> : Node
         Console.WriteLine($"NetworkPeerDisconnected() {id}");
         ServerConnectedClients.Remove(id);
 
-        var leavingPC = GetTree().Root.FindChildByPredicate<T>(it => it.Id == id);
+        var leavingPC = GetTree().Root.FindChildByPredicate<IReplicable>(it => it.Id == id);
 
-        if (leavingPC != null) leavingPC.QueueFree();
+        if (leavingPC != null) ((Node)leavingPC).QueueFree();
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -217,13 +214,13 @@ public class NetworkController<T, R, F> : Node
             if (NetUpdateAccum >= 0.1f && ServerConnectedClients.Count > 0)
             {
                 NetUpdateAccum = 0;
-                var msg = new List<R>();
+                var msg = new List<ReplicationData>();
 
                 foreach (var n in GetTree().Root.GetChildren())
                 {
-                    if (n is IReplicable<R>)
+                    if (n is IReplicable)
                     {
-                        msg.Add((n as IReplicable<R>).GetReplicationData());
+                        msg.Add((n as IReplicable).GetReplicationDataFrom());
                     }
                 }
 
@@ -257,7 +254,7 @@ public class NetworkController<T, R, F> : Node
 
         try
         {
-            var data = Util.BytesToObj<List<R>>(rawData);
+            var data = Util.BytesToObj<List<ReplicationData>>(rawData);
 
             //var parts = String.Join(", ", data.Select(it => $"[{it[0]} {it[1]}]"));
 
@@ -266,7 +263,7 @@ public class NetworkController<T, R, F> : Node
             var activeIds = new HashSet<int>(data.Select(it => it.Id));
 
             var existingIds = GetTree().Root.GetChildren().ToList<Node>()
-                .Select(it => it as IReplicable<R>)
+                .Select(it => it as IReplicable)
                 .Where(it => it != null)
                 .Select(it => it.Id)
                 .ToHashSet();
@@ -436,17 +433,5 @@ public class NetworkController<T, R, F> : Node
             // call the method locally, as it is supposed to be called here
             mi.Invoke(targetNode, args);
         }
-    }
-
-    public static bool IsInDedicatedServerMode()
-    {
-        foreach (var arg in OS.GetCmdlineArgs())
-        {
-            var parts = arg.Split("=");
-
-            if (parts[0] == "--server") return true;
-        }
-
-        return false;
     }
 }
