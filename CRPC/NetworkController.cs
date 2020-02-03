@@ -358,13 +358,22 @@ public class NetworkController : Node
 
             bool allowAny = mi.GetCustomAttribute<AllowRemoteAny>() != null;
             bool allowMaster = mi.GetCustomAttribute<AllowRemoteMaster>() != null;
+            bool allowServer = mi.GetCustomAttribute<AllowRemoteServer>() != null;
 
             bool runOnClients = mi.GetCustomAttribute<RunOnClients>() != null || mi.GetCustomAttribute<RunOnAll>() != null;
             bool runOnOwner = mi.GetCustomAttribute<RunOnOwner>() != null;
             bool runOnServer = mi.GetCustomAttribute<RunOnServer>() != null || mi.GetCustomAttribute<RunOnAll>() != null;
 
-            if (!allowAny && !allowMaster) throw new Exception($"Attempt to call method {funcName} via RPC, but this method is not allowed");
-            if (!allowAny && (node.GetNetworkMaster() != uniqId && uniqId != 1)) throw new Exception($"Incorrect RPC sender, {uniqId}, expected 1 or {node.GetNetworkMaster()}");
+            if (!allowAny && !allowMaster && !allowServer) throw new Exception($"Attempt to call method {funcName} via RPC, but this method is not allowed");
+
+            if (!allowAny)
+            {
+                HashSet<int> validSenders = new HashSet<int>();
+                if (allowServer || allowMaster) validSenders.Add(1);
+                if (allowMaster) validSenders.Add(node.GetNetworkMaster());
+
+                if (!validSenders.Contains(uniqId)) throw new Exception($"Incorrect RPC sender, {uniqId}, expected " + String.Join(" or ", validSenders));
+            }
 
             var args = Util.BytesToObj<byte[][]>(doubleEncodedArgs);
 
