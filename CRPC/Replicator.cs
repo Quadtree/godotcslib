@@ -15,6 +15,7 @@ static class Replicator
         ReplicationData ret = new ReplicationData(){
             Id = replicable.Id,
             TypeId = typeId,
+            NetworkMaster = ((Node)replicable).GetNetworkMaster(),
             FieldValues = new List<byte[]>(),
         };
 
@@ -40,6 +41,7 @@ static class Replicator
     public static void SetReplicationDataTo(this IReplicable replicable, ReplicationData data)
     {
         replicable.Id = data.Id;
+        ((Node)replicable).SetNetworkMaster(data.NetworkMaster);
 
         int i = 0;
 

@@ -8,5 +8,7 @@ public sealed class ReplicationData
 
     public int TypeId;
 
+    public int NetworkMaster;
+
     public List<byte[]> FieldValues;
 }

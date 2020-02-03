@@ -22,6 +22,9 @@ public class NetworkController : Node
     [Export]
     PackedScene PCType;
 
+    [Export]
+    string AutoRequestURI;
+
     static Dictionary<Type, int> TypeToTypeIdMapping = new Dictionary<Type, int>();
 
     float NetUpdateAccum;
@@ -119,7 +122,7 @@ public class NetworkController : Node
         var req = new HTTPRequest();
         GetTree().Root.AddChild(req);
         req.Connect("request_completed", this, nameof(AutoRequestCompleted));
-        req.Request("https://p281f9jre2.execute-api.us-east-1.amazonaws.com/prod/gameserver/litd_remaster");
+        req.Request(AutoRequestURI);
     }
 
     private void AutoRequestCompleted(int result, int responseCode, Godot.Collections.Array headers, byte[] body)
@@ -236,7 +239,7 @@ public class NetworkController : Node
                 }
 
                 //var jsonToSend = JSON.Print(msg);
-                //Console.WriteLine($"Sending JSON: {jsonToSend}");
+                //Console.WriteLine("Sending replicables: " + String.Join(",", msg.Select(it => $"{it.GetType()} {it.Id}")));
 
                 RpcUnreliable(nameof(ReceiveReplication), Util.ObjToBytes(msg));
             }
@@ -284,6 +287,8 @@ public class NetworkController : Node
             foreach (var c in toCreate)
             {
                 var curDataChunk = data.Find(it => it.Id == c);
+
+                Console.WriteLine($"Received request from server to create new thing with ID {c}");
 
                 var newPC = Spawnables[curDataChunk.TypeId].Instance();
                 GetTree().Root.AddChild(newPC);
