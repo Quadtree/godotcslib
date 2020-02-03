@@ -10,11 +10,11 @@ using System.Reflection;
 
 static class Replicator
 {
-    public static ReplicationData GetReplicationDataFrom(this IReplicable replicable)
+    public static ReplicationData GetReplicationDataFrom(this IReplicable replicable, int typeId)
     {
         ReplicationData ret = new ReplicationData(){
             Id = replicable.Id,
-            TypeId = ReplicationData.GetTypeId(replicable.GetType())
+            TypeId = typeId,
         };
 
         foreach (var prop in replicable.GetType().GetProperties())

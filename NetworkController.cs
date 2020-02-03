@@ -19,6 +19,17 @@ public class NetworkController : Node
     [Export]
     IList<PackedScene> Spawnables;
 
+    [Export]
+    PackedScene PCType;
+
+    class SpawnableType
+    {
+        public Type Clazz;
+        public PackedScene Scene;
+    }
+
+    static Dictionary<Type, int> TypeToTypeIdMapping = new Dictionary<Type, int>();
+
     float NetUpdateAccum;
 
     float TimeWithNoClientsConnected = 0;
@@ -217,7 +228,7 @@ public class NetworkController : Node
                 {
                     if (n is IReplicable)
                     {
-                        msg.Add((n as IReplicable).GetReplicationDataFrom());
+                        msg.Add((n as IReplicable).GetReplicationDataFrom(TypeToTypeIdMapping[n.GetType()]));
                     }
                 }
 
@@ -271,7 +282,7 @@ public class NetworkController : Node
             {
                 var curDataChunk = data.Find(it => it.Id == c);
 
-                var newPC = curDataChunk.CreateNew();
+                var newPC = Spawnables[curDataChunk.TypeId].Instance();
                 GetTree().Root.AddChild(newPC);
                 ((IReplicable)newPC).SetReplicationDataTo(curDataChunk);
             }
