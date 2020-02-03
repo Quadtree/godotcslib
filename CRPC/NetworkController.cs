@@ -22,12 +22,6 @@ public class NetworkController : Node
     [Export]
     PackedScene PCType;
 
-    class SpawnableType
-    {
-        public Type Clazz;
-        public PackedScene Scene;
-    }
-
     static Dictionary<Type, int> TypeToTypeIdMapping = new Dictionary<Type, int>();
 
     float NetUpdateAccum;
@@ -45,6 +39,15 @@ public class NetworkController : Node
     public override void _Ready()
     {
         Console.WriteLine(String.Join(", ", OS.GetCmdlineArgs()));
+
+        int nextSpawnableId = 0;
+        foreach (var ps in Spawnables)
+        {
+            var t = ps.Instance();
+
+            Console.WriteLine($"Registering {t.GetType()} in slot {nextSpawnableId}");
+            TypeToTypeIdMapping[t.GetType()] = nextSpawnableId++;
+        }
 
         TargetHost = "auto";
 

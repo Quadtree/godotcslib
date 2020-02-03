@@ -2,7 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System;
 
-public class ReplicationData
+public sealed class ReplicationData
 {
     public int Id;
 

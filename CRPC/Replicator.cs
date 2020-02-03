@@ -15,6 +15,7 @@ static class Replicator
         ReplicationData ret = new ReplicationData(){
             Id = replicable.Id,
             TypeId = typeId,
+            FieldValues = new List<byte[]>(),
         };
 
         foreach (var prop in replicable.GetType().GetProperties())
