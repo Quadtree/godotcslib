@@ -17,10 +17,7 @@ public class NetworkController : Node
     WebSocketMultiplayerPeer peer;
 
     [Export]
-    PackedScene PCType;
-
-    [Export]
-    PackedScene MonsterType;
+    IList<PackedScene> Spawnables;
 
     float NetUpdateAccum;
 
