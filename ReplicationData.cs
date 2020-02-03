@@ -11,7 +11,7 @@ public class ReplicationData
     class SpawnableType
     {
         public Type Clazz;
-        public string SceneFileName;
+        public PackedScene Scene;
     }
 
     static List<SpawnableType> KnownTypes = new List<SpawnableType>();
@@ -21,7 +21,7 @@ public class ReplicationData
     {
         KnownTypes.Add(new SpawnableType(){
             Clazz = type,
-            SceneFileName = sceneFileName,
+            Scene = (PackedScene)ResourceLoader.Load(sceneFileName),
         });
         TypeToTypeIdMapping.Add(type, KnownTypes.Count - 1);
     }
@@ -33,6 +33,6 @@ public class ReplicationData
 
     public Node CreateNew()
     {
-        
+        return KnownTypes[TypeId].Scene.Instance();
     }
 }
