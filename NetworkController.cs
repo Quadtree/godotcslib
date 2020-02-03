@@ -274,29 +274,25 @@ public class NetworkController : Node
             {
                 var curDataChunk = data.Find(it => it.Id == c);
 
-                var factory = new F();
-
-                var newPC = factory.CreateFrom(GetTree().Root, curDataChunk);
-
-                newPC.SetReplicationData(curDataChunk);
-
-                GetTree().Root.AddChild(newPC as Node);
+                var newPC = curDataChunk.CreateNew();
+                GetTree().Root.AddChild(newPC);
+                ((IReplicable)newPC).SetReplicationDataTo(curDataChunk);
             }
 
             foreach (var dataChunk in data)
             {
                 GetTree().Root.GetChildren().ToList<Node>()
-                    .Select(it => it as IReplicable<R>)
+                    .Select(it => it as IReplicable)
                     .Where(it => it != null)
                     .Where(it => it.Id == dataChunk.Id)
                     .First()
-                    .SetReplicationData(dataChunk);
+                    .SetReplicationDataTo(dataChunk);
             }
 
             foreach (var c in existingIds.Except(activeIds))
             {
                 ((Node)GetTree().Root.GetChildren().ToList<Node>()
-                    .Select(it => it as IReplicable<R>)
+                    .Select(it => it as IReplicable)
                     .Where(it => it != null)
                     .Where(it => it.Id == c)
                     .First())
