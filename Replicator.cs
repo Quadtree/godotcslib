@@ -12,12 +12,50 @@ static class Replicator
 {
     public static ReplicationData GetReplicationDataFrom(this IReplicable replicable)
     {
-        // @TODO: Implement
-        return null;
+        ReplicationData ret = new ReplicationData(){
+            Id = replicable.Id,
+            TypeId = ReplicationData.GetTypeId(replicable.GetType())
+        };
+
+        foreach (var prop in replicable.GetType().GetProperties())
+        {
+            if (prop.GetCustomAttribute<Replicated>() != null)
+            {
+                ret.FieldValues.Add(Util.ObjToBytes(prop.GetValue(replicable), prop.PropertyType));
+            }
+        }
+
+        foreach (var prop in replicable.GetType().GetFields())
+        {
+            if (prop.GetCustomAttribute<Replicated>() != null)
+            {
+                ret.FieldValues.Add(Util.ObjToBytes(prop.GetValue(replicable), prop.FieldType));
+            }
+        }
+
+        return ret;
     }
 
     public static void SetReplicationDataTo(this IReplicable replicable, ReplicationData data)
     {
-        // @TODO: Implement
+        replicable.Id = data.Id;
+
+        int i = 0;
+
+        foreach (var prop in replicable.GetType().GetProperties())
+        {
+            if (prop.GetCustomAttribute<Replicated>() != null)
+            {
+                prop.SetValue(replicable, Util.BytesToObj(data.FieldValues[i++], prop.PropertyType));
+            }
+        }
+
+        foreach (var prop in replicable.GetType().GetFields())
+        {
+            if (prop.GetCustomAttribute<Replicated>() != null)
+            {
+                prop.SetValue(replicable, Util.BytesToObj(data.FieldValues[i++], prop.FieldType));
+            }
+        }
     }
 }

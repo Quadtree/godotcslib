@@ -8,6 +8,8 @@ public class ReplicationData
 
     public int TypeId;
 
+    public List<byte[]> FieldValues;
+
     class SpawnableType
     {
         public Type Clazz;
