@@ -12,6 +12,16 @@ public static class Util
 {
     private const bool SERIALIZATION_DEBUG_PRINT = false;
 
+    public static void ClearAndChangeScene(this SceneTree tree, string path)
+    {
+        tree.ChangeScene(path);
+
+        foreach (var item in tree.Root.GetChildren().ToList<Node>())
+        {
+            item.QueueFree();
+        }
+    }
+
     public static List<T> ToList<T>(this Godot.Collections.Array array)
     {
         var ret = new List<T>();
@@ -94,6 +104,23 @@ public static class Util
         }
 
         return null;
+    }
+
+    public static List<T> FindChildrenByType<T>(this Node node) where T : class
+    {
+        List<T> retList = new List<T>();
+
+        foreach (var n in node.GetChildren().ToList<Node>())
+        {
+            if (n is T)
+            {
+                retList.Add((T)(object)n);
+            }
+
+            retList.AddRange(n.FindChildrenByType<T>());
+        }
+
+        return retList;
     }
 
     public static T FindChildByName<T>(this Node node, string name) where T : Node
@@ -486,5 +513,55 @@ public static class Util
         var n = contextNode.GetTree().Root.GetChildren().ToList<Particles>().Count;
 
         Console.WriteLine($"N={n}");
+    }
+
+    public static void SpawnOneShotCPUParticleSystem(PackedScene system, Node contextNode, Vector3 location)
+    {
+        if (system == null) return;
+
+        var particles = (CPUParticles)system.Instance();
+        contextNode.GetTree().Root.AddChild(particles);
+
+        particles.SetGlobalLocation(location);
+
+        particles.OneShot = true;
+        particles.Emitting = true;
+
+        var timer = new Timer();
+        timer.Autostart = true;
+        timer.WaitTime = 5;
+        timer.Connect("timeout", particles, "queue_free");
+        particles.AddChild(timer);
+
+        var n = contextNode.GetTree().Root.GetChildren().ToList<CPUParticles>().Count;
+
+        Console.WriteLine($"N={n}");
+    }
+
+    public static void SpawnOneShotSound(string resName, Node contextNode, Vector3 location)
+    {
+        Util.SpawnOneShotSound((AudioStream)GD.Load(resName), contextNode, location);
+    }
+
+    public static void SpawnOneShotSound(AudioStream sample, Node contextNode, Vector3 location)
+    {
+        if (sample == null) return;
+
+        var asp = new AudioStreamPlayer3D();
+        contextNode.GetTree().Root.AddChild(asp);
+
+        asp.SetGlobalLocation(location);
+        asp.Stream = sample;
+        asp.UnitDb = 40;
+        asp.Play();
+
+        var timer = new Timer();
+        timer.Autostart = true;
+        timer.WaitTime = 5;
+        timer.Connect("timeout", asp, "queue_free");
+        asp.AddChild(timer);
+
+        var n = contextNode.GetTree().Root.GetChildren().ToList<AudioStreamPlayer3D>().Count;
+        Console.WriteLine($"ASPs={n}");
     }
 }
