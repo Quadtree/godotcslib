@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using Godot.Collections;
 using System.IO;
 using System.Text;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 public static class Util
 {
@@ -16,9 +18,11 @@ public static class Util
     {
         tree.ChangeScene(path);
 
-        foreach (var item in tree.Root.GetChildren().ToList<Node>())
+        var r = tree.Root;
+        var c = r.GetChildCount();
+        for (int i = 0; i < c; ++i)
         {
-            item.QueueFree();
+            r.GetChild(i).QueueFree();
         }
     }
 
@@ -74,59 +78,105 @@ public static class Util
         );
     }
 
-    public static T FindChildByPredicate<T>(this Node node, Predicate<T> predicate) where T : class
+    public static T FindChildByPredicate<T>(this Node node, Predicate<T> predicate, int maxRecursionDepth = 1) where T : Node
     {
-        foreach (var n in node.GetChildren().ToList<Node>())
+        var c = node.GetChildCount();
+        for (int i = 0; i < c; ++i)
         {
+            var n = node.GetChild(i);
             if (n is T)
             {
-                if (predicate.Invoke((T)(object)n)) return (T)(object)n;
+                if (predicate.Invoke((T)n)) return (T)n;
             }
+        }
 
-            var ret = n.FindChildByPredicate<T>(predicate);
-            if (ret != null) return ret;
+        if (maxRecursionDepth > 0)
+        {
+            for (int i = 0; i < c; ++i)
+            {
+                var n = node.GetChild(i);
+                var ret = n.FindChildByPredicate<T>(predicate);
+                if (ret != null) return ret;
+            }
         }
 
         return null;
     }
 
-    public static T FindChildByType<T>(this Node node) where T : class
+    private static ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<Type, Node>> findChildByTypeCache = new ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<Type, Node>>();
+
+    public static T FindChildByType<T>(this Node node, int maxRecursionDepth = 1) where T : Node
     {
-        foreach (var n in node.GetChildren().ToList<Node>())
+        var dict = findChildByTypeCache.GetOrCreateValue(node);
+
+        if (dict.ContainsKey(typeof(T)) && dict[typeof(T)].IsInstanceValid())
         {
+            return (T)dict[typeof(T)];
+        }
+
+        var c = node.GetChildCount();
+        for (int i = 0; i < c; ++i)
+        {
+            var n = node.GetChild(i);
+
             if (n is T)
             {
-                return (T)(object)n;
+                dict[typeof(T)] = (T)n;
+                return (T)n;
             }
+        }
 
-            var ret = n.FindChildByType<T>();
-            if (ret != null) return ret;
+        if (maxRecursionDepth > 0)
+        {
+            for (int i = 0; i < c; ++i)
+            {
+                var n = node.GetChild(i);
+                var ret = n.FindChildByType<T>(maxRecursionDepth - 1);
+                if (ret != null) return ret;
+            }
         }
 
         return null;
     }
 
-    public static List<T> FindChildrenByType<T>(this Node node) where T : class
+    public static IEnumerable<T> FindChildrenByType<T>(this Node node, int maxRecursionDepth = 1) where T : class
     {
-        List<T> retList = new List<T>();
-
-        foreach (var n in node.GetChildren().ToList<Node>())
+        var c = node.GetChildCount();
+        for (int i = 0; i < c; ++i)
         {
+            var n = node.GetChild(i);
+
             if (n is T)
             {
-                retList.Add((T)(object)n);
+                yield return ((T)(object)n);
             }
 
-            retList.AddRange(n.FindChildrenByType<T>());
+            if (maxRecursionDepth > 0)
+            {
+                foreach (var nn in n.FindChildrenByType<T>(maxRecursionDepth - 1))
+                {
+                    yield return nn;
+                }
+            }
         }
-
-        return retList;
     }
 
-    public static T FindChildByName<T>(this Node node, string name) where T : Node
+    private static ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<string, Node>> findChildByNameCache = new ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<string, Node>>();
+
+    public static T FindChildByName<T>(this Node node, string name, int maxRecursionDepth = 1) where T : Node
     {
-        foreach (var n in node.GetChildren().ToList<Node>())
+        var dict = findChildByNameCache.GetOrCreateValue(node);
+
+        if (dict.ContainsKey(name) && dict[name].IsInstanceValid())
         {
+            return (T)dict[name];
+        }
+
+        var c = node.GetChildCount();
+        for (int i = 0; i < c; ++i)
+        {
+            var n = node.GetChild(i);
+
             if (n.Name == name)
             {
                 if (n is T)
@@ -138,10 +188,18 @@ public static class Util
                     Console.WriteLine($"Node {name} is of unexpected type {n.GetType()}");
                 }
             }
-
-            var ret = n.FindChildByName<T>(name);
-            if (ret != null) return ret;
         }
+
+        if (maxRecursionDepth > 0)
+        {
+            for (int i = 0; i < c; ++i)
+            {
+                var n = node.GetChild(i);
+                var ret = n.FindChildByName<T>(name, maxRecursionDepth - 1);
+                if (ret != null) return ret;
+            }
+        }
+
 
         return null;
     }
@@ -169,8 +227,8 @@ public static class Util
     private static void ObjToBytes(object obj, Type type, MemoryStream mem)
     {
         SerializationLog($"Serializing a {type}");
-        if (type == typeof(System.Int32)){ WriteAll(mem, BitConverter.GetBytes((int)obj)); return; }
-        if (type == typeof(long)){ WriteAll(mem, BitConverter.GetBytes((long)obj)); return; }
+        if (type == typeof(System.Int32)) { WriteAll(mem, BitConverter.GetBytes((int)obj)); return; }
+        if (type == typeof(long)) { WriteAll(mem, BitConverter.GetBytes((long)obj)); return; }
         if (type == typeof(float))
         {
             //Console.WriteLine($"It is a {type} / {obj.GetType()}");
@@ -178,7 +236,7 @@ public static class Util
             WriteAll(mem, BitConverter.GetBytes((float)obj));
             return;
         }
-        if (type == typeof(double)){ WriteAll(mem, BitConverter.GetBytes((double)obj)); return; }
+        if (type == typeof(double)) { WriteAll(mem, BitConverter.GetBytes((double)obj)); return; }
         if (type.IsEnum)
         {
             WriteAll(mem, BitConverter.GetBytes((int)obj));
@@ -199,7 +257,7 @@ public static class Util
         }
         if (type == typeof(byte))
         {
-            WriteAll(mem, new byte[]{ (byte)obj });
+            WriteAll(mem, new byte[] { (byte)obj });
             return;
         }
         if (type == typeof(bool))
@@ -316,7 +374,7 @@ public static class Util
 
             System.Collections.IList ret = (System.Collections.IList)Activator.CreateInstance(type);
 
-            for (int i=0;i<len;++i)
+            for (int i = 0; i < len; ++i)
             {
                 ret.Add(BytesToObj(mem, type.GenericTypeArguments[0]));
             }
@@ -330,7 +388,7 @@ public static class Util
 
             System.Collections.IList ret = (System.Collections.IList)Activator.CreateInstance(type, len);
 
-            for (int i=0;i<len;++i)
+            for (int i = 0; i < len; ++i)
             {
                 ret[i] = BytesToObj(mem, type.GetElementType());
             }
@@ -378,7 +436,7 @@ public static class Util
         return ret.ToString();
     }
 
-    #pragma warning disable
+#pragma warning disable
     private static void SerializationLog(string txt)
     {
         if (SERIALIZATION_DEBUG_PRINT)
@@ -479,7 +537,7 @@ public static class Util
 
     public static T FindParentByType<T>(this Node node)
     {
-        while(true)
+        while (true)
         {
             var parent = node.GetParentOrNull<Node>();
 
@@ -509,10 +567,6 @@ public static class Util
         timer.WaitTime = 5;
         timer.Connect("timeout", particles, "queue_free");
         particles.AddChild(timer);
-
-        var n = contextNode.GetTree().Root.GetChildren().ToList<Particles>().Count;
-
-        Console.WriteLine($"N={n}");
     }
 
     public static void SpawnOneShotCPUParticleSystem(PackedScene system, Node contextNode, Vector3 location)
@@ -532,10 +586,6 @@ public static class Util
         timer.WaitTime = 5;
         timer.Connect("timeout", particles, "queue_free");
         particles.AddChild(timer);
-
-        var n = contextNode.GetTree().Root.GetChildren().ToList<CPUParticles>().Count;
-
-        Console.WriteLine($"N={n}");
     }
 
     public static void SpawnOneShotSound(string resName, Node contextNode, Vector3 location)
@@ -547,21 +597,44 @@ public static class Util
     {
         if (sample == null) return;
 
-        var asp = new AudioStreamPlayer3D();
-        contextNode.GetTree().Root.AddChild(asp);
+        var r = contextNode.GetTree().Root;
+        var c = r.GetChildCount();
 
-        asp.SetGlobalLocation(location);
-        asp.Stream = sample;
-        asp.UnitDb = 40;
-        asp.Play();
+        var existingCount = 0;
+        AudioStreamPlayer3D availExisting = null;
 
-        var timer = new Timer();
-        timer.Autostart = true;
-        timer.WaitTime = 5;
-        timer.Connect("timeout", asp, "queue_free");
-        asp.AddChild(timer);
+        for (int i = 0; i < c; ++i)
+        {
+            var n = r.GetChild(i);
+            if (n is AudioStreamPlayer3D)
+            {
+                existingCount++;
 
-        var n = contextNode.GetTree().Root.GetChildren().ToList<AudioStreamPlayer3D>().Count;
-        Console.WriteLine($"ASPs={n}");
+                if (!((AudioStreamPlayer3D)n).IsPlaying())
+                {
+                    availExisting = (AudioStreamPlayer3D)n;
+                    break;
+                }
+            }
+        }
+
+        if (availExisting == null && existingCount < 10)
+        {
+            availExisting = new AudioStreamPlayer3D();
+            contextNode.GetTree().Root.AddChild(availExisting);
+        }
+
+        if (availExisting != null)
+        {
+            availExisting.SetGlobalLocation(location);
+            availExisting.Stream = sample;
+            availExisting.UnitDb = 15;
+            availExisting.Play();
+        }
+    }
+
+    public static void SpeedUpPhysicsIfNeeded()
+    {
+        Engine.IterationsPerSecond = Math.Max(Engine.IterationsPerSecond, (int)Engine.GetFramesPerSecond());
     }
 }

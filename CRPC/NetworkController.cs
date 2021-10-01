@@ -213,7 +213,7 @@ public class NetworkController : Node
         Console.WriteLine($"NetworkPeerDisconnected() {id}");
         ServerConnectedClients.Remove(id);
 
-        var leavingPC = GetTree().Root.FindChildByPredicate<IReplicable>(it => it.Id == id);
+        var leavingPC = GetTree().Root.FindChildByPredicate<Node>(it => it is IReplicable && ((IReplicable)it).Id == id);
 
         if (leavingPC != null) ((Node)leavingPC).QueueFree();
     }
