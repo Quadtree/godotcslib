@@ -95,6 +95,8 @@ public static class Util
 
     public static T FindChildByType<T>(this Node node, int maxRecursionDepth = 1) where T : Node
     {
+        if (node == null) return null;
+
         var dict = findChildByTypeCache.GetOrCreateValue(node);
 
         if (dict.ContainsKey(typeof(T)) && dict[typeof(T)].IsInstanceValid())
@@ -153,6 +155,8 @@ public static class Util
 
     public static T FindChildByName<T>(this Node node, string name, int maxRecursionDepth = 1) where T : Node
     {
+        if (node == null || name == null) return null;
+
         var dict = findChildByNameCache.GetOrCreateValue(node);
 
         if (dict.ContainsKey(name) && dict[name].IsInstanceValid())
