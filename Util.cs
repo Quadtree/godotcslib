@@ -14,18 +14,6 @@ public static class Util
 {
     private const bool SERIALIZATION_DEBUG_PRINT = false;
 
-    public static void ClearAndChangeScene(this SceneTree tree, string path)
-    {
-        tree.ChangeScene(path);
-
-        var r = tree.Root;
-        var c = r.GetChildCount();
-        for (int i = 0; i < c; ++i)
-        {
-            r.GetChild(i).QueueFree();
-        }
-    }
-
     public static List<T> ToList<T>(this Godot.Collections.Array array)
     {
         var ret = new List<T>();
@@ -525,14 +513,14 @@ public static class Util
      */
     public static bool IsUIFocused(this Node node)
     {
-        var control = node.GetTree().Root.FindChildByPredicate<Control>(it => it.HasFocus());
+        var control = node.GetTree().CurrentScene.FindChildByPredicate<Control>(it => it.HasFocus());
 
         return control != null;
     }
 
     public static void CRPC(this Node node, string methodName, params object[] parameters)
     {
-        node.GetTree().Root.FindChildByType<NetworkController>().SendCRPC(node, methodName, parameters);
+        node.GetTree().CurrentScene.FindChildByType<NetworkController>().SendCRPC(node, methodName, parameters);
     }
 
     public static T FindParentByType<T>(this Node node)
@@ -555,7 +543,7 @@ public static class Util
         if (system == null) return;
 
         var particles = (Particles)system.Instance();
-        contextNode.GetTree().Root.AddChild(particles);
+        contextNode.GetTree().CurrentScene.AddChild(particles);
 
         particles.SetGlobalLocation(location);
 
@@ -574,7 +562,7 @@ public static class Util
         if (system == null) return;
 
         var particles = (CPUParticles)system.Instance();
-        contextNode.GetTree().Root.AddChild(particles);
+        contextNode.GetTree().CurrentScene.AddChild(particles);
 
         particles.SetGlobalLocation(location);
 
@@ -597,7 +585,7 @@ public static class Util
     {
         if (sample == null) return;
 
-        var r = contextNode.GetTree().Root;
+        var r = contextNode.GetTree().CurrentScene;
         var c = r.GetChildCount();
 
         var existingCount = 0;
@@ -621,7 +609,7 @@ public static class Util
         if (availExisting == null && existingCount < 10)
         {
             availExisting = new AudioStreamPlayer3D();
-            contextNode.GetTree().Root.AddChild(availExisting);
+            contextNode.GetTree().CurrentScene.AddChild(availExisting);
         }
 
         if (availExisting != null)
