@@ -1,18 +1,20 @@
 /**
  * This file is released under the MIT License: https://opensource.org/licenses/MIT
  */
-using Godot;
 using System;
 using System.Collections.Generic;
-using Godot.Collections;
 using System.IO;
-using System.Text;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
+using Godot;
+using Godot.Collections;
 
 public static class Util
 {
     private const bool SERIALIZATION_DEBUG_PRINT = false;
+
+    public static readonly RandomNumberGenerator rng = new RandomNumberGenerator();
 
     public static List<T> ToList<T>(this Godot.Collections.Array array)
     {
@@ -66,7 +68,7 @@ public static class Util
         );
     }
 
-    public static T FindChildByPredicate<T>(this Node node, Predicate<T> predicate, int maxRecursionDepth = 1) where T : Node
+    public static T FindChildByPredicate<T>(this Node node, Predicate<T> predicate, int maxRecursionDepth = 10) where T : Node
     {
         var c = node.GetChildCount();
         for (int i = 0; i < c; ++i)
@@ -93,7 +95,7 @@ public static class Util
 
     private static ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<Type, Node>> findChildByTypeCache = new ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<Type, Node>>();
 
-    public static T FindChildByType<T>(this Node node, int maxRecursionDepth = 1) where T : Node
+    public static T FindChildByType<T>(this Node node, int maxRecursionDepth = 10) where T : Node
     {
         if (node == null) return null;
 
@@ -129,7 +131,7 @@ public static class Util
         return null;
     }
 
-    public static IEnumerable<T> FindChildrenByType<T>(this Node node, int maxRecursionDepth = 1) where T : class
+    public static IEnumerable<T> FindChildrenByType<T>(this Node node, int maxRecursionDepth = 10) where T : class
     {
         var c = node.GetChildCount();
         for (int i = 0; i < c; ++i)
@@ -153,7 +155,7 @@ public static class Util
 
     private static ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<string, Node>> findChildByNameCache = new ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<string, Node>>();
 
-    public static T FindChildByName<T>(this Node node, string name, int maxRecursionDepth = 1) where T : Node
+    public static T FindChildByName<T>(this Node node, string name, int maxRecursionDepth = 10) where T : Node
     {
         if (node == null || name == null) return null;
 
@@ -625,8 +627,123 @@ public static class Util
         }
     }
 
+    public static void SpawnOneShotSound(AudioStream sample, Node contextNode, float volumeOffset = 0.0f)
+    {
+        if (sample == null) return;
+
+        var r = contextNode.GetTree().CurrentScene;
+        var c = r.GetChildCount();
+
+        var existingCount = 0;
+        AudioStreamPlayer availExisting = null;
+
+        for (int i = 0; i < c; ++i)
+        {
+            var n = r.GetChild(i);
+            if (n is AudioStreamPlayer)
+            {
+                existingCount++;
+
+                if (!((AudioStreamPlayer)n).IsPlaying())
+                {
+                    availExisting = (AudioStreamPlayer)n;
+                    break;
+                }
+            }
+        }
+
+        if (availExisting == null && existingCount < 10)
+        {
+            availExisting = new AudioStreamPlayer();
+            contextNode.GetTree().CurrentScene.AddChild(availExisting);
+        }
+
+        if (availExisting != null)
+        {
+            availExisting.Stream = sample;
+            availExisting.VolumeDb = volumeOffset;
+            availExisting.Play();
+        }
+    }
+
     public static void SpeedUpPhysicsIfNeeded()
     {
         Engine.IterationsPerSecond = Math.Max(Engine.IterationsPerSecond, (int)Engine.GetFramesPerSecond());
+    }
+
+    public static int Clamp(int initial, int min, int max)
+    {
+        if (initial > max) initial = max;
+        if (initial < min) initial = min;
+        return initial;
+    }
+
+    public static string TitleCase(this string str)
+    {
+        return str.Substr(0, 1).ToUpper() + str.Substr(1, 1000).ToLower();
+    }
+
+    public static T Choice<T>(IReadOnlyList<T> list)
+    {
+        if (list.Count == 0) return default(T);
+        return list[rng.RandiRange(0, list.Count - 1)];
+    }
+
+    public static T MinBy<T>(this IEnumerable<T> ie, Func<T, int> func)
+    {
+        bool hasMin = false;
+        var minComp = 0;
+        var minVal = default(T);
+
+        foreach (var val in ie)
+        {
+            var comp = func(val);
+
+            if (!hasMin || comp < minComp)
+            {
+                hasMin = true;
+                minComp = comp;
+                minVal = val;
+            }
+        }
+
+        return minVal;
+    }
+
+    public static T MaxBy<T>(this IEnumerable<T> ie, Func<T, int> func)
+    {
+        bool hasMax = false;
+        var minComp = 0;
+        var minVal = default(T);
+
+        foreach (var val in ie)
+        {
+            var comp = func(val);
+
+            if (!hasMax || comp > minComp)
+            {
+                hasMax = true;
+                minComp = comp;
+                minVal = val;
+            }
+        }
+
+        return minVal;
+    }
+
+    public static IEnumerable<T> Single<T>(T v)
+    {
+        yield return v;
+    }
+
+    public static void TakeScreenshot(Node ctx)
+    {
+        var image = ctx.GetViewport().GetTexture().GetData();
+        image.FlipY();
+        var dir = new Godot.Directory();
+        dir.Open("user://");
+        dir.MakeDir("screenshots");
+
+        image.SavePng($"user://screenshots/{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss")}.png");
     }
 }
