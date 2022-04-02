@@ -678,6 +678,13 @@ public static class Util
         return initial;
     }
 
+    public static float Clamp(float initial, float min, float max)
+    {
+        if (initial > max) initial = max;
+        if (initial < min) initial = min;
+        return initial;
+    }
+
     public static string TitleCase(this string str)
     {
         return str.Substr(0, 1).ToUpper() + str.Substr(1, 1000).ToLower();
@@ -745,5 +752,10 @@ public static class Util
         dir.MakeDir("screenshots");
 
         image.SavePng($"user://screenshots/{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss")}.png");
+    }
+
+    public static int Square(int n)
+    {
+        return n * n;
     }
 }
