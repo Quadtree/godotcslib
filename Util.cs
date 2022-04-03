@@ -627,6 +627,11 @@ public static class Util
         }
     }
 
+    public static void SpawnOneShotSound(string resName, Node contextNode, float volumeOffset = 0.0f)
+    {
+        Util.SpawnOneShotSound((AudioStream)GD.Load(resName), contextNode, volumeOffset);
+    }
+
     public static void SpawnOneShotSound(AudioStream sample, Node contextNode, float volumeOffset = 0.0f)
     {
         if (sample == null) return;
