@@ -2,7 +2,13 @@ using Godot;
 
 public static class Picking
 {
-    public static Vector3? PickPointAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
+    class PickResult
+    {
+        public Vector3? Pos;
+        public RigidBody Hit;
+    }
+
+    private static PickResult PickAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
     {
         var cam = ctx.GetViewport().GetCamera();
 
@@ -12,12 +18,24 @@ public static class Picking
 
         var curPos = ctx.GetWorld().DirectSpaceState.IntersectRay(raySrc, rayTo, null, collisionMask);
 
-        if (curPos.Contains("position"))
-        {
-            var pos = (Vector3)curPos["position"];
-            return pos;
-        }
+        var ret = new PickResult();
 
-        return null;
+        if (curPos.Contains("position"))
+            ret.Pos = (Vector3)curPos["position"];
+
+        if (curPos.Contains("collider"))
+            ret.Hit = (RigidBody)curPos["collider"];
+
+        return ret;
+    }
+
+    public static Vector3? PickPointAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
+    {
+        return PickAtCursor(ctx, dist, collisionMask).Pos;
+    }
+
+    public static RigidBody PickObjectAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
+    {
+        return PickAtCursor(ctx, dist, collisionMask).Hit;
     }
 }
