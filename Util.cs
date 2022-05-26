@@ -475,9 +475,30 @@ public static class Util
         return false;
     }
 
+    [Obsolete("Use Random() instead")]
     public static float random()
     {
         return (float)rand.NextDouble();
+    }
+
+    public static float Random()
+    {
+        return (float)rand.NextDouble();
+    }
+
+    public static float RandF(float min, float max)
+    {
+        return Random() * (max - min) + min;
+    }
+
+    public static bool RandChance(float chance)
+    {
+        return Random() <= chance;
+    }
+
+    public static bool RandChanceMil(int chancePerMil)
+    {
+        return RandInt(0, 1000) < chancePerMil;
     }
 
     public static Vector3 GetGlobalLocation(this Spatial node)
@@ -676,17 +697,10 @@ public static class Util
         Engine.IterationsPerSecond = Math.Max(Engine.IterationsPerSecond, (int)Engine.GetFramesPerSecond());
     }
 
-    public static int Clamp(int initial, int min, int max)
+    public static T Clamp<T>(T initial, T min, T max) where T : IComparable<T>
     {
-        if (initial > max) initial = max;
-        if (initial < min) initial = min;
-        return initial;
-    }
-
-    public static float Clamp(float initial, float min, float max)
-    {
-        if (initial > max) initial = max;
-        if (initial < min) initial = min;
+        if (initial.CompareTo(max) > 0) initial = max;
+        if (initial.CompareTo(min) < 0) initial = min;
         return initial;
     }
 
@@ -701,17 +715,30 @@ public static class Util
         return list[rng.RandiRange(0, list.Count - 1)];
     }
 
-    public static T MinBy<T>(this IEnumerable<T> ie, Func<T, int> func)
+    public static T Choice<T>(IEnumerable<T> enumerable)
+    {
+        var n = 0;
+        var ret = default(T);
+
+        foreach (var it in enumerable)
+        {
+            if (RandInt(0, ++n) == 0) ret = it;
+        }
+
+        return ret;
+    }
+
+    public static T MinBy<T, R>(this IEnumerable<T> ie, Func<T, R> func) where R : IComparable<R>
     {
         bool hasMin = false;
-        var minComp = 0;
+        var minComp = default(R);
         var minVal = default(T);
 
         foreach (var val in ie)
         {
             var comp = func(val);
 
-            if (!hasMin || comp < minComp)
+            if (!hasMin || comp.CompareTo(minComp) < 0)
             {
                 hasMin = true;
                 minComp = comp;
@@ -722,17 +749,17 @@ public static class Util
         return minVal;
     }
 
-    public static T MaxBy<T>(this IEnumerable<T> ie, Func<T, int> func)
+    public static T MaxBy<T, R>(this IEnumerable<T> ie, Func<T, R> func) where R : IComparable<R>
     {
         bool hasMax = false;
-        var minComp = 0;
+        var minComp = default(R);
         var minVal = default(T);
 
         foreach (var val in ie)
         {
             var comp = func(val);
 
-            if (!hasMax || comp > minComp)
+            if (!hasMax || comp.CompareTo(minComp) > 0)
             {
                 hasMax = true;
                 minComp = comp;
@@ -762,5 +789,10 @@ public static class Util
     public static int Square(int n)
     {
         return n * n;
+    }
+
+    public static IReadOnlyCollection<T> GetEnumValues<T>() where T : Enum
+    {
+        return (IReadOnlyCollection<T>)Enum.GetValues(typeof(T));
     }
 }

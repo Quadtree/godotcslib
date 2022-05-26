@@ -66,6 +66,16 @@ static class SaveLoad<T> where T : HasVersion, new()
         return inst;
     }
 
+    public static void Rename(string src, string dest)
+    {
+        RenameUserFile(src, dest);
+    }
+
+    public static void Delete(string filename = "default")
+    {
+        DeleteUserFile(filename);
+    }
+
     private static File OpenUserFile(string filename, File.ModeFlags flags)
     {
         var f = new File();
@@ -85,5 +95,12 @@ static class SaveLoad<T> where T : HasVersion, new()
         var d = new Directory();
         d.Open("user://");
         d.Rename(src, dest);
+    }
+
+    private static void DeleteUserFile(string file)
+    {
+        var d = new Directory();
+        d.Open("user://");
+        d.Remove(file);
     }
 }
