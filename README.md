@@ -1,7 +1,7 @@
 ## Installation
 
 ```
-git submodule add 'git@github.com:Quadtree/godotcslib.git' cslib
+git submodule add 'https://github.com/Quadtree/godotcslib.git' cslib
 ```
 
 ## Updating
