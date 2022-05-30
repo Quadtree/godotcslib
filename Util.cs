@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 using Godot;
 using Godot.Collections;
 
@@ -545,11 +546,6 @@ public static class Util
         return control != null;
     }
 
-    public static void CRPC(this Node node, string methodName, params object[] parameters)
-    {
-        node.GetTree().CurrentScene.FindChildByType<NetworkController>().SendCRPC(node, methodName, parameters);
-    }
-
     public static T FindParentByType<T>(this Node node)
     {
         while (true)
@@ -794,5 +790,18 @@ public static class Util
     public static IReadOnlyCollection<T> GetEnumValues<T>() where T : Enum
     {
         return (IReadOnlyCollection<T>)Enum.GetValues(typeof(T));
+    }
+
+    // There is a bug in Godot where if you use ContinueWith() in HTML5 it will crash
+    // This function can be used until the bug is likely fixed in 4.0
+    public static void SafeContinueWith(this Task task, Action callback)
+    {
+        _SafeContinueWith(task, callback);
+    }
+
+    private static async Task _SafeContinueWith(Task task, Action callback)
+    {
+        await task;
+        if (callback != null) callback();
     }
 }

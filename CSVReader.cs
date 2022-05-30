@@ -20,6 +20,9 @@ public static class CSVReader
 
     private static object AutoCoerce(string target, Type destType)
     {
+        if (destType.IsSubclassOf(typeof(Enum)))
+            return Enum.Parse(destType, target);
+
         if (destType.IsArray && destType.GetElementType() == typeof(string))
             return target.Split("|");
 
