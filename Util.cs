@@ -156,7 +156,7 @@ public static class Util
                 }
                 else
                 {
-                    Console.WriteLine($"Node {name} is of unexpected type {n.GetType()}");
+                    GD.Print($"Node {name} is of unexpected type {n.GetType()}");
                 }
             }
         }
@@ -369,7 +369,7 @@ public static class Util
 
         SerializationLog($"Seems it's some kind of object");
 
-        if (!type.IsSealed) Console.WriteLine($"Warning: {type} should be sealed");
+        if (!type.IsSealed) GD.Print($"Warning: {type} should be sealed");
 
         var inst = Activator.CreateInstance(type);
 
@@ -412,7 +412,7 @@ public static class Util
     {
         if (SERIALIZATION_DEBUG_PRINT)
         {
-            Console.WriteLine(txt);
+            GD.Print(txt);
         }
     }
 
