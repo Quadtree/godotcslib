@@ -17,30 +17,6 @@ public static class Util
 
     public static readonly RandomNumberGenerator rng = new RandomNumberGenerator();
 
-    /*public static List<T> ToList<T>(this Godot.Collections.Array array)
-    {
-        var ret = new List<T>();
-
-        foreach (var v in array)
-        {
-            if (v is T) ret.Add((T)v);
-        }
-
-        return ret;
-    }*/
-
-    /*public static HashSet<T> ToHashSet<T>(this Godot.Collections.Array array)
-    {
-        var ret = new HashSet<T>();
-
-        foreach (var v in array)
-        {
-            ret.Add((T)v);
-        }
-
-        return ret;
-    }*/
-
     public static HashSet<T> ToHashSet<T>(this IEnumerable<T> array)
     {
         var ret = new HashSet<T>();
@@ -658,11 +634,6 @@ public static class Util
             availExisting.Play();
         }
     }
-
-    /*public static void SpeedUpPhysicsIfNeeded()
-    {
-        Engine.IterationsPerSecond = Math.Max(Engine.IterationsPerSecond, (int)Engine.GetFramesPerSecond());
-    }*/
 
     public static T Clamp<T>(T initial, T min, T max) where T : IComparable<T>
     {
