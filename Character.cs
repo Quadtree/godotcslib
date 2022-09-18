@@ -3,8 +3,8 @@
  * and is therefore under the CC-BY 3.0 License https://github.com/godotengine/godot-docs/blob/master/LICENSE.txt
  * The code has been modified from the original version
  */
-using Godot;
 using System;
+using Godot;
 
 public class Character : KinematicBody
 {
@@ -41,7 +41,7 @@ public class Character : KinematicBody
         _camera = GetNode<Camera>("RotationBase/Rotation_Helper/Camera");
         _rotationHelper = GetNode<Spatial>("RotationBase/Rotation_Helper");
 
-        Input.SetMouseMode(Input.MouseMode.Captured);
+        Input.SetMouseMode(Input.MouseModeEnum.Captured);
 
         CallDeferred(nameof(PostReadySpawn));
     }
@@ -145,13 +145,13 @@ public class Character : KinematicBody
         {
             float highestGroundPoint = -10000;
 
-            for (int i=0;i<4;++i)
+            for (int i = 0; i < 4; ++i)
             {
                 var rayDelta = new Vector3(0.2f * Mathf.Cos(Mathf.Pi / 2 * i), 0, 0.2f * Mathf.Sin(Mathf.Pi / 2 * i));
                 var rayStart = this.GetGlobalLocation() + rayDelta + new Vector3(0, 2, 0);
                 var rayEnd = rayStart + new Vector3(0, -4, 0);
 
-                var ret = GetWorld().DirectSpaceState.IntersectRay(rayStart, rayEnd, new Godot.Collections.Array(){GetRid()});
+                var ret = GetWorld().DirectSpaceState.IntersectRay(rayStart, rayEnd, new Godot.Collections.Array() { GetRid() });
                 if (ret.Count > 0)
                 {
                     var intersectPoint = (Vector3)ret["position"];
@@ -178,22 +178,26 @@ public class Character : KinematicBody
                 Translation -= new Vector3(0, heightAboveGround, 0);
                 IsOnGround = true;
                 _vel.y = 0;
-            } else {
+            }
+            else
+            {
                 IsOnGround = false;
             }
-        } else {
+        }
+        else
+        {
             IsOnGround = false;
         }
     }
 
     public override void _Input(InputEvent evt)
     {
-        if (evt is InputEventMouseButton && Input.GetMouseMode() != Input.MouseMode.Captured)
+        if (evt is InputEventMouseButton && Input.GetMouseMode() != Input.MouseModeEnum.Captured)
         {
-            Input.SetMouseMode(Input.MouseMode.Captured);
+            Input.SetMouseMode(Input.MouseModeEnum.Captured);
         }
 
-        if (evt is InputEventMouseMotion && Input.GetMouseMode() == Input.MouseMode.Captured)
+        if (evt is InputEventMouseMotion && Input.GetMouseMode() == Input.MouseModeEnum.Captured)
         {
             InputEventMouseMotion mouseEvent = evt as InputEventMouseMotion;
             _rotationHelper.RotateX(Mathf.Deg2Rad(-mouseEvent.Relative.y * MouseSensitivity));
