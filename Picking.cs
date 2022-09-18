@@ -5,36 +5,41 @@ public static class Picking
     class PickResult
     {
         public Vector3? Pos;
-        public RigidBody Hit;
+        public PhysicsBody3D Hit;
     }
 
-    private static PickResult PickAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
+    private static PickResult PickAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384)
     {
-        var cam = ctx.GetViewport().GetCamera();
+        var cam = ctx.GetViewport().GetCamera3d();
 
         var raySrc = cam.ProjectRayOrigin(ctx.GetViewport().GetMousePosition());
         var rayNorm = cam.ProjectRayNormal(ctx.GetViewport().GetMousePosition());
         var rayTo = raySrc + rayNorm * dist;
 
-        var curPos = ctx.GetWorld().DirectSpaceState.IntersectRay(raySrc, rayTo, null, collisionMask);
+        var fp = new PhysicsRayQueryParameters3D();
+        fp.From = raySrc;
+        fp.To = rayTo;
+        fp.CollisionMask = collisionMask;
+
+        var curPos = ctx.GetWorld3d().DirectSpaceState.IntersectRay(fp);
 
         var ret = new PickResult();
 
-        if (curPos.Contains("position"))
+        if (curPos.ContainsKey("position"))
             ret.Pos = (Vector3)curPos["position"];
 
-        if (curPos.Contains("collider"))
-            ret.Hit = (RigidBody)curPos["collider"];
+        if (curPos.ContainsKey("collider"))
+            ret.Hit = (PhysicsBody3D)curPos["collider"];
 
         return ret;
     }
 
-    public static Vector3? PickPointAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
+    public static Vector3? PickPointAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384)
     {
         return PickAtCursor(ctx, dist, collisionMask).Pos;
     }
 
-    public static RigidBody PickObjectAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
+    public static PhysicsBody3D PickObjectAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384)
     {
         return PickAtCursor(ctx, dist, collisionMask).Hit;
     }

@@ -171,7 +171,9 @@ class XMLSaveLoadGeneric<T, M>
         EnsureDirectoryExists(SAVE_DIRECTORY);
         var dir = new Directory();
         dir.Open(SAVE_DIRECTORY);
-        dir.ListDirBegin(true);
+        dir.IncludeNavigational = false;
+        dir.IncludeHidden = false;
+        dir.ListDirBegin();
 
         try
         {
@@ -193,7 +195,9 @@ class XMLSaveLoadGeneric<T, M>
         EnsureDirectoryExists(SAVE_DIRECTORY);
         var dir = new Directory();
         dir.Open(SAVE_DIRECTORY);
-        dir.ListDirBegin(true);
+        dir.IncludeNavigational = false;
+        dir.IncludeHidden = false;
+        dir.ListDirBegin();
 
         try
         {

@@ -82,7 +82,7 @@ public static class CSVReader
 
         var ret = new List<T>();
 
-        while (f.GetPosition() < f.GetLen())
+        while (f.GetPosition() < f.GetLength())
         {
             var values = f.GetCsvLine();
             var retRow = new T();

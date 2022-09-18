@@ -17,7 +17,7 @@ public static class Util
 
     public static readonly RandomNumberGenerator rng = new RandomNumberGenerator();
 
-    public static List<T> ToList<T>(this Godot.Collections.Array array)
+    /*public static List<T> ToList<T>(this Godot.Collections.Array array)
     {
         var ret = new List<T>();
 
@@ -27,9 +27,9 @@ public static class Util
         }
 
         return ret;
-    }
+    }*/
 
-    public static HashSet<T> ToHashSet<T>(this Godot.Collections.Array array)
+    /*public static HashSet<T> ToHashSet<T>(this Godot.Collections.Array array)
     {
         var ret = new HashSet<T>();
 
@@ -39,7 +39,7 @@ public static class Util
         }
 
         return ret;
-    }
+    }*/
 
     public static HashSet<T> ToHashSet<T>(this IEnumerable<T> array)
     {
@@ -440,40 +440,11 @@ public static class Util
         }
     }
 
-    public static void AssertSenderIsMaster(this Node node)
-    {
-        if (node.GetTree().GetRpcSenderId() != 0 && node.GetTree().GetRpcSenderId() != node.GetNetworkMaster()) throw new Exception($"This function can only be called on the owner, expected {node.GetNetworkMaster()} got {node.GetTree().GetRpcSenderId()}");
-    }
-
-    public static void AssertSenderIsServer(this Node node)
-    {
-        if (node.GetTree().GetRpcSenderId() != 0 && node.GetTree().GetRpcSenderId() != 1) throw new Exception($"This function can only be called by the server, expected 1 got {node.GetTree().GetRpcSenderId()}");
-    }
-
-    public static void AssertSenderIsServerOrMaster(this Node node)
-    {
-        if (node.GetTree().GetRpcSenderId() != 0 && node.GetTree().GetRpcSenderId() != 1 && node.GetTree().GetRpcSenderId() != node.GetNetworkMaster()) throw new Exception($"This function can only be called by the server or master, expected 1 or {node.GetNetworkMaster()} got {node.GetTree().GetRpcSenderId()}");
-    }
-
     private static Random rand = new Random();
 
     public static int RandInt(int minInclusive, int maxExclusive)
     {
         return rand.Next(minInclusive, maxExclusive);
-    }
-
-    public static bool IsServer(this Node node)
-    {
-        if (node.GetTree().NetworkPeer?.GetUniqueId() == 1) return true;
-
-        return false;
-    }
-
-    public static bool IsClient(this Node node)
-    {
-        if (node.GetTree().NetworkPeer?.GetUniqueId() != 1) return true;
-
-        return false;
     }
 
     [Obsolete("Use Random() instead")]
@@ -502,19 +473,19 @@ public static class Util
         return RandInt(0, 1000) < chancePerMil;
     }
 
-    public static Vector3 GetGlobalLocation(this Spatial node)
+    public static Vector3 GetGlobalLocation(this Node3D node)
     {
         return node.GlobalTransform.origin;
     }
 
-    public static void SetGlobalLocation(this Spatial node, Vector3 globalLocation)
+    public static void SetGlobalLocation(this Node3D node, Vector3 globalLocation)
     {
         var t = node.GlobalTransform;
         t.origin = globalLocation;
         node.GlobalTransform = t;
     }
 
-    public static void CreateRegularTimer(this Node node, string targetMethodName, float interval, Timer.TimerProcessMode mode = Timer.TimerProcessMode.Idle)
+    /*public static void CreateRegularTimer(this Node node, string targetMethodName, float interval, Timer.TimerProcessMode mode = Timer.TimerProcessMode.Idle)
     {
         Timer uploadTimer = new Timer();
         uploadTimer.OneShot = false;
@@ -523,7 +494,7 @@ public static class Util
         uploadTimer.WaitTime = interval;
         uploadTimer.ProcessMode = mode;
         node.AddChild(uploadTimer);
-    }
+    }*/
 
     /**
      * Determines if this object is still valid (aka it has not been disposed)
@@ -561,7 +532,7 @@ public static class Util
         }
     }
 
-    public static void SpawnOneShotParticleSystem(PackedScene system, Node contextNode, Vector3 location)
+    /*public static void SpawnOneShotParticleSystem(PackedScene system, Node contextNode, Vector3 location)
     {
         if (system == null) return;
 
@@ -597,7 +568,7 @@ public static class Util
         timer.WaitTime = 5;
         timer.Connect("timeout", particles, "queue_free");
         particles.AddChild(timer);
-    }
+    }*/
 
     public static void SpawnOneShotSound(string resName, Node contextNode, Vector3 location)
     {
@@ -688,10 +659,10 @@ public static class Util
         }
     }
 
-    public static void SpeedUpPhysicsIfNeeded()
+    /*public static void SpeedUpPhysicsIfNeeded()
     {
         Engine.IterationsPerSecond = Math.Max(Engine.IterationsPerSecond, (int)Engine.GetFramesPerSecond());
-    }
+    }*/
 
     public static T Clamp<T>(T initial, T min, T max) where T : IComparable<T>
     {
@@ -724,54 +695,12 @@ public static class Util
         return ret;
     }
 
-    public static T MinBy<T, R>(this IEnumerable<T> ie, Func<T, R> func) where R : IComparable<R>
-    {
-        bool hasMin = false;
-        var minComp = default(R);
-        var minVal = default(T);
-
-        foreach (var val in ie)
-        {
-            var comp = func(val);
-
-            if (!hasMin || comp.CompareTo(minComp) < 0)
-            {
-                hasMin = true;
-                minComp = comp;
-                minVal = val;
-            }
-        }
-
-        return minVal;
-    }
-
-    public static T MaxBy<T, R>(this IEnumerable<T> ie, Func<T, R> func) where R : IComparable<R>
-    {
-        bool hasMax = false;
-        var minComp = default(R);
-        var minVal = default(T);
-
-        foreach (var val in ie)
-        {
-            var comp = func(val);
-
-            if (!hasMax || comp.CompareTo(minComp) > 0)
-            {
-                hasMax = true;
-                minComp = comp;
-                minVal = val;
-            }
-        }
-
-        return minVal;
-    }
-
     public static IEnumerable<T> Single<T>(T v)
     {
         yield return v;
     }
 
-    public static void TakeScreenshot(Node ctx)
+    /*public static void TakeScreenshot(Node ctx)
     {
         var image = ctx.GetViewport().GetTexture().GetData();
         image.FlipY();
@@ -780,7 +709,7 @@ public static class Util
         dir.MakeDir("screenshots");
 
         image.SavePng($"user://screenshots/{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss")}.png");
-    }
+    }*/
 
     public static int Square(int n)
     {
@@ -803,5 +732,21 @@ public static class Util
     {
         await task;
         if (callback != null) callback();
+    }
+
+    public static void SafeContinueWith<T>(this Task<T> task, Action<T> callback)
+    {
+        _SafeContinueWith(task, callback);
+    }
+
+    private static async Task _SafeContinueWith<T>(Task<T> task, Action<T> callback)
+    {
+        T data = await task;
+        if (callback != null) callback(data);
+    }
+
+    public static Error Connect(this Node node, string signal, Delegate @delegate)
+    {
+        return node.Connect(signal, new Callable(@delegate));
     }
 }

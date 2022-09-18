@@ -8,9 +8,9 @@ public static class UIUtil
         lbl.Text = text;
         lbl.SizeFlagsHorizontal = (int)Control.SizeFlags.Fill;
         lbl.SizeFlagsVertical = (int)Control.SizeFlags.Fill;
-        lbl.Align = Godot.Label.AlignEnum.Center;
-        lbl.Valign = Godot.Label.VAlign.Center;
-        if (tooltip != null) lbl.HintTooltip = tooltip;
+        lbl.HorizontalAlignment = HorizontalAlignment.Center;
+        lbl.VerticalAlignment = VerticalAlignment.Center;
+        if (tooltip != null) lbl.TooltipText = tooltip;
         return lbl;
     }
 

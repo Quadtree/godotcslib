@@ -28,7 +28,7 @@ public class GodotFileStream : Stream
     }
 
     public override long Position { get => (long)File.GetPosition(); set => throw new NotImplementedException(); }
-    public override long Length => (long)File.GetLen();
+    public override long Length => (long)File.GetLength();
     public override bool CanWrite => _CanWrite;
     public override bool CanSeek => false;
     public override bool CanRead => _CanRead;

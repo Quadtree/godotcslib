@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
-public class ChangeMonitor<T>
+public partial class ChangeMonitor<T>
 {
     Func<T> Func;
     public ulong LastKey { get; private set; }
