@@ -37,8 +37,7 @@ public static class CSVReader
 
     public static IList<T> Read<T>(string filename) where T : new()
     {
-        var f = new File();
-        f.Open(filename, File.ModeFlags.Read);
+        var f = FileAccess.Open(filename, FileAccess.ModeFlags.Read);
 
         var columnDefs = new List<ColumnDef<T>>();
 

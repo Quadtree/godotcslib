@@ -30,7 +30,7 @@ static class SaveLoad<T> where T : new()
             bf.Serialize(stream, CurrentVersion);
             bf.Serialize(stream, inst);
             stream.Flush();
-            using (var of = OpenUserFile(tmpFileName, File.ModeFlags.Write))
+            using (var of = OpenUserFile(tmpFileName, FileAccess.ModeFlags.Write))
             {
                 of.StoreBuffer(stream.ToArray());
             }
@@ -73,7 +73,7 @@ static class SaveLoad<T> where T : new()
         {
             var bf = new BinaryFormatter();
             bf.Binder = new CustomBinder();
-            using (var file = OpenUserFile(filename, File.ModeFlags.Read))
+            using (var file = OpenUserFile(filename, FileAccess.ModeFlags.Read))
             {
                 using (var stream = new System.IO.MemoryStream())
                 {
@@ -110,13 +110,12 @@ static class SaveLoad<T> where T : new()
         DeleteUserFile(filename);
     }
 
-    public static File OpenUserFile(string filename, File.ModeFlags flags)
+    public static FileAccess OpenUserFile(string filename, FileAccess.ModeFlags flags)
     {
-        var f = new File();
-        var ret = f.Open($"user://{filename}", flags);
-        if (ret == Error.Ok)
-            return f;
-        else if (ret == Error.FileNotFound)
+        var ret = FileAccess.Open($"user://{filename}", flags);
+        if (ret != null)
+            return ret;
+        else if (FileAccess.GetOpenError() == Error.FileNotFound)
             throw new System.IO.FileNotFoundException();
         else
             throw new Exception();
@@ -124,22 +123,19 @@ static class SaveLoad<T> where T : new()
 
     public static bool UserFileExists(string filename)
     {
-        var d = new Directory();
-        d.Open("user://");
+        var d = DirAccess.Open("user://");
         return d.FileExists(filename);
     }
 
     public static void RenameUserFile(string src, string dest)
     {
-        var d = new Directory();
-        d.Open("user://");
+        var d = DirAccess.Open("user://");
         d.Rename(src, dest);
     }
 
     public static void DeleteUserFile(string file)
     {
-        var d = new Directory();
-        d.Open("user://");
+        var d = DirAccess.Open("user://");
         d.Remove(file);
     }
 

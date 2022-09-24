@@ -30,7 +30,7 @@ class XMLSaveLoadGeneric<T, M>
         filename = InputNameToPath(filename);
         var tmpFileName = $"{filename}.tmp";
 
-        using (var stream = new GodotFileStream(tmpFileName, File.ModeFlags.Write))
+        using (var stream = new GodotFileStream(tmpFileName, FileAccess.ModeFlags.Write))
         {
             using (var xmlWriter = XmlDictionaryWriter.Create(stream, new XmlWriterSettings
             {
@@ -96,7 +96,7 @@ class XMLSaveLoadGeneric<T, M>
         var originalFilename = filename;
         filename = InputNameToPath(filename);
 
-        using (var stream = new GodotFileStream(filename, File.ModeFlags.Read))
+        using (var stream = new GodotFileStream(filename, FileAccess.ModeFlags.Read))
         {
             using (var xmlReader = XmlDictionaryReader.Create(stream, new XmlReaderSettings
             {
@@ -139,11 +139,10 @@ class XMLSaveLoadGeneric<T, M>
     public static void EnsureDirectoryExists(string dirname)
     {
         AT.True(dirname?.Length > 0);
-        var dir = new Directory();
-        if (dir.Open(dirname) != Error.Ok)
+        var dir = DirAccess.Open(dirname);
+        if (dir != null)
         {
-            var rootDir = new Directory();
-            rootDir.Open("user://");
+            var rootDir = DirAccess.Open("user://");
             if (rootDir.MakeDirRecursive(dirname) != Error.Ok)
             {
                 throw new Exception();
@@ -169,8 +168,7 @@ class XMLSaveLoadGeneric<T, M>
     public static IEnumerable<string> List()
     {
         EnsureDirectoryExists(SAVE_DIRECTORY);
-        var dir = new Directory();
-        dir.Open(SAVE_DIRECTORY);
+        var dir = DirAccess.Open(SAVE_DIRECTORY);
         dir.IncludeNavigational = false;
         dir.IncludeHidden = false;
         dir.ListDirBegin();
@@ -193,8 +191,7 @@ class XMLSaveLoadGeneric<T, M>
     public static IEnumerable<M> ListMetadata()
     {
         EnsureDirectoryExists(SAVE_DIRECTORY);
-        var dir = new Directory();
-        dir.Open(SAVE_DIRECTORY);
+        var dir = DirAccess.Open(SAVE_DIRECTORY);
         dir.IncludeNavigational = false;
         dir.IncludeHidden = false;
         dir.ListDirBegin();
@@ -224,7 +221,7 @@ class XMLSaveLoadGeneric<T, M>
         }
     }
 
-    private static File OpenUserFile(string filename, File.ModeFlags flags)
+    private static FileAccess OpenUserFile(string filename, FileAccess.ModeFlags flags)
     {
         return SaveLoad<T>.OpenUserFile(filename, flags);
     }

@@ -6,25 +6,24 @@ public class GodotFileStream : Stream
 {
     static bool DEBUG_MODE = false;
 
-    Godot.File File;
+    Godot.FileAccess File;
     bool _CanWrite = false;
     bool _CanRead = false;
     bool IsClosed = false;
 
-    public GodotFileStream(string path, Godot.File.ModeFlags flags)
+    public GodotFileStream(string path, Godot.FileAccess.ModeFlags flags)
     {
-        File = new Godot.File();
-        var rc = File.Open(path, flags);
-        if (rc != Error.Ok)
+        var rc = Godot.FileAccess.Open(path, flags);
+        if (rc == null && Godot.FileAccess.GetOpenError() != Error.Ok)
         {
-            if (rc == Error.FileNotFound)
+            if (Godot.FileAccess.GetOpenError() == Error.FileNotFound)
                 throw new FileNotFoundException($"Failed to open {path}: {rc}");
             else
                 throw new IOException($"Failed to open {path}: {rc}");
         }
 
-        _CanWrite = flags == Godot.File.ModeFlags.Write || flags == Godot.File.ModeFlags.WriteRead || flags == Godot.File.ModeFlags.ReadWrite;
-        _CanRead = flags == Godot.File.ModeFlags.Read || flags == Godot.File.ModeFlags.WriteRead || flags == Godot.File.ModeFlags.ReadWrite;
+        _CanWrite = flags == Godot.FileAccess.ModeFlags.Write || flags == Godot.FileAccess.ModeFlags.WriteRead || flags == Godot.FileAccess.ModeFlags.ReadWrite;
+        _CanRead = flags == Godot.FileAccess.ModeFlags.Read || flags == Godot.FileAccess.ModeFlags.WriteRead || flags == Godot.FileAccess.ModeFlags.ReadWrite;
     }
 
     public override long Position { get => (long)File.GetPosition(); set => throw new NotImplementedException(); }
@@ -78,6 +77,7 @@ public class GodotFileStream : Stream
     {
         IsClosed = true;
         base.Close();
-        File.Close();
+        File.Flush();
+        // we don't close the file. it seems this method was removed?
     }
 }
