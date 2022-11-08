@@ -586,7 +586,7 @@ public static class Util
         {
             availExisting.SetGlobalLocation(location);
             availExisting.Stream = sample;
-            availExisting.UnitDb = 15;
+            availExisting.VolumeDb = 15;
             availExisting.Play();
         }
     }
@@ -716,8 +716,8 @@ public static class Util
         if (callback != null) callback(data);
     }
 
-    public static Error Connect(this Node node, string signal, Delegate @delegate)
+    public static Error Connect(this Node node, string signal, Action @delegate)
     {
-        return node.Connect(signal, new Callable(@delegate));
+        return node.Connect(signal, Callable.From(@delegate));
     }
 }
