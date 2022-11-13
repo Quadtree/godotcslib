@@ -101,11 +101,17 @@ public static class AT
         }
     }
 
-    static void Failed(string msg, bool crit)
+    public static void Failed(string msg, bool crit)
     {
         if (crit)
             throw new System.Exception(msg);
         else
             GD.PushError(msg);
+    }
+
+    public static void ReferenceNotEqual<T>(T a, T b, bool crit = false)
+    {
+        if (!OS.IsDebugBuild()) return;
+        if (System.Object.ReferenceEquals(a, b)) Failed($"Expected {a} !ref= {b}", crit);
     }
 }
