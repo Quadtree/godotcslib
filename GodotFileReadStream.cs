@@ -22,6 +22,8 @@ public class GodotFileStream : Stream
                 throw new IOException($"Failed to open {path}: {rc}");
         }
 
+        File = rc;
+
         _CanWrite = flags == Godot.FileAccess.ModeFlags.Write || flags == Godot.FileAccess.ModeFlags.WriteRead || flags == Godot.FileAccess.ModeFlags.ReadWrite;
         _CanRead = flags == Godot.FileAccess.ModeFlags.Read || flags == Godot.FileAccess.ModeFlags.WriteRead || flags == Godot.FileAccess.ModeFlags.ReadWrite;
     }

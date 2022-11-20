@@ -8,6 +8,9 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using Godot;
 
+// This file uses deprecated and insecure serialization routines. Prefer XMLSaveLoad
+#pragma warning disable SYSLIB0011
+
 public class HasVersion : Attribute
 {
     public HasVersion(int version)
@@ -141,3 +144,5 @@ static class SaveLoad<T> where T : new()
 
     private static int CurrentVersion => (Attribute.GetCustomAttribute(typeof(T), typeof(HasVersion)) as HasVersion)?.VERSION ?? 0;
 }
+
+#pragma warning restore SYSLIB0011
