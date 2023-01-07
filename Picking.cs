@@ -5,7 +5,7 @@ public static class Picking
     class PickResult
     {
         public Vector3? Pos;
-        public RigidBody Hit;
+        public PhysicsBody Hit;
     }
 
     private static PickResult PickAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
@@ -24,7 +24,7 @@ public static class Picking
             ret.Pos = (Vector3)curPos["position"];
 
         if (curPos.Contains("collider"))
-            ret.Hit = (RigidBody)curPos["collider"];
+            ret.Hit = (PhysicsBody)curPos["collider"];
 
         return ret;
     }
@@ -34,7 +34,7 @@ public static class Picking
         return PickAtCursor(ctx, dist, collisionMask).Pos;
     }
 
-    public static RigidBody PickObjectAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
+    public static PhysicsBody PickObjectAtCursor(Spatial ctx, float dist = 10000, uint collisionMask = 16384)
     {
         return PickAtCursor(ctx, dist, collisionMask).Hit;
     }
