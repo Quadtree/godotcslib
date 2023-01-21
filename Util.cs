@@ -220,7 +220,7 @@ public static class Util
                 WriteAll(mem, BitConverter.GetBytes(-1));
                 return;
             }
-            byte[] rawBytes = ((string)obj).ToUTF8();
+            byte[] rawBytes = ((string)obj).ToUTF8Buffer();
 
             WriteAll(mem, BitConverter.GetBytes(rawBytes.Length));
             WriteAll(mem, rawBytes);
@@ -568,7 +568,7 @@ public static class Util
             {
                 existingCount++;
 
-                if (!((AudioStreamPlayer3D)n).IsPlaying())
+                if (!((AudioStreamPlayer3D)n).Playing)
                 {
                     availExisting = (AudioStreamPlayer3D)n;
                     break;
@@ -613,7 +613,7 @@ public static class Util
             {
                 existingCount++;
 
-                if (!((AudioStreamPlayer)n).IsPlaying())
+                if (!((AudioStreamPlayer)n).Playing)
                 {
                     availExisting = (AudioStreamPlayer)n;
                     break;

@@ -6,8 +6,8 @@ public static class UIUtil
     {
         var lbl = new Label();
         lbl.Text = text;
-        lbl.SizeFlagsHorizontal = (int)Control.SizeFlags.Fill;
-        lbl.SizeFlagsVertical = (int)Control.SizeFlags.Fill;
+        lbl.SizeFlagsHorizontal = Control.SizeFlags.Fill;
+        lbl.SizeFlagsVertical = Control.SizeFlags.Fill;
         lbl.HorizontalAlignment = HorizontalAlignment.Center;
         lbl.VerticalAlignment = VerticalAlignment.Center;
         if (tooltip != null) lbl.TooltipText = tooltip;
