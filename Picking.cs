@@ -10,7 +10,7 @@ public static class Picking
 
     private static PickResult PickAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384)
     {
-        var cam = ctx.GetViewport().GetCamera3d();
+        var cam = ctx.GetViewport().GetCamera3D();
 
         var raySrc = cam.ProjectRayOrigin(ctx.GetViewport().GetMousePosition());
         var rayNorm = cam.ProjectRayNormal(ctx.GetViewport().GetMousePosition());
@@ -21,7 +21,7 @@ public static class Picking
         fp.To = rayTo;
         fp.CollisionMask = collisionMask;
 
-        var curPos = ctx.GetWorld3d().DirectSpaceState.IntersectRay(fp);
+        var curPos = ctx.GetWorld3D().DirectSpaceState.IntersectRay(fp);
 
         var ret = new PickResult();
 

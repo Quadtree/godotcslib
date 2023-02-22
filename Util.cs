@@ -32,8 +32,8 @@ public static class Util
     public static Godot.Collections.Array VecToArray(Vector2 vector2)
     {
         return new Godot.Collections.Array(){
-            vector2.x,
-            vector2.y
+            vector2.X,
+            vector2.Y
         };
     }
 
@@ -220,7 +220,7 @@ public static class Util
                 WriteAll(mem, BitConverter.GetBytes(-1));
                 return;
             }
-            byte[] rawBytes = ((string)obj).ToUTF8Buffer();
+            byte[] rawBytes = ((string)obj).ToUtf8Buffer();
 
             WriteAll(mem, BitConverter.GetBytes(rawBytes.Length));
             WriteAll(mem, rawBytes);
@@ -451,13 +451,13 @@ public static class Util
 
     public static Vector3 GetGlobalLocation(this Node3D node)
     {
-        return node.GlobalTransform.origin;
+        return node.GlobalTransform.Origin;
     }
 
     public static void SetGlobalLocation(this Node3D node, Vector3 globalLocation)
     {
         var t = node.GlobalTransform;
-        t.origin = globalLocation;
+        t.Origin = globalLocation;
         node.GlobalTransform = t;
     }
 
@@ -477,9 +477,9 @@ public static class Util
      * Because Godot uses reference counting, this should always be called on objects that are
      * referenced from other objects
      */
-    public static bool IsInstanceValid(this Godot.Object obj)
+    public static bool IsInstanceValid(this Godot.GodotObject obj)
     {
-        return Godot.Object.IsInstanceValid(obj);
+        return Godot.GodotObject.IsInstanceValid(obj);
     }
 
     /**
