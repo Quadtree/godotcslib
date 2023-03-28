@@ -508,11 +508,26 @@ public static class Util
         }
     }
 
-    /*public static void SpawnOneShotParticleSystem(PackedScene system, Node contextNode, Vector3 location)
+    public static T FindParentByName<T>(this Node node, string name)
+    {
+        while (true)
+        {
+            var parent = node.GetParentOrNull<Node>();
+
+            if (parent == null) return default(T);
+            if (parent is T && parent.Name == name)
+            {
+                return (T)(object)node.GetParentOrNull<Node>();
+            }
+            node = parent;
+        }
+    }
+
+    public static void SpawnOneShotParticleSystem(PackedScene system, Node contextNode, Vector3 location)
     {
         if (system == null) return;
 
-        var particles = (Particles)system.Instance();
+        var particles = system.Instantiate<GpuParticles3D>();
         contextNode.GetTree().CurrentScene.AddChild(particles);
 
         particles.SetGlobalLocation(location);
@@ -523,7 +538,7 @@ public static class Util
         var timer = new Timer();
         timer.Autostart = true;
         timer.WaitTime = 5;
-        timer.Connect("timeout", particles, "queue_free");
+        timer.Connect("timeout", new Callable(particles, "queue_free"));
         particles.AddChild(timer);
     }
 
@@ -531,7 +546,7 @@ public static class Util
     {
         if (system == null) return;
 
-        var particles = (CPUParticles)system.Instance();
+        var particles = system.Instantiate<CpuParticles3D>();
         contextNode.GetTree().CurrentScene.AddChild(particles);
 
         particles.SetGlobalLocation(location);
@@ -542,9 +557,9 @@ public static class Util
         var timer = new Timer();
         timer.Autostart = true;
         timer.WaitTime = 5;
-        timer.Connect("timeout", particles, "queue_free");
+        timer.Connect("timeout", new Callable(particles, "queue_free"));
         particles.AddChild(timer);
-    }*/
+    }
 
     public static void SpawnOneShotSound(string resName, Node contextNode, Vector3 location)
     {
@@ -719,5 +734,62 @@ public static class Util
     public static Error Connect(this Node node, string signal, Action @delegate)
     {
         return node.Connect(signal, Callable.From(@delegate));
+    }
+
+    public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> it)
+    {
+        return it.OrderBy(it2 => GD.Randi());
+    }
+
+    public static T[,] ToMultiDimArray<T>(this IEnumerable<T[]> it)
+    {
+        int dimension = -1;
+
+        foreach (var it2 in it)
+        {
+            if (dimension == -1)
+                dimension = it2.Length;
+            else if (dimension != it2.Length)
+                throw new Exception();
+        }
+
+        var ret = new T[it.Count(), dimension];
+        var i = 0;
+
+        foreach (var it2 in it)
+        {
+            for (var j = 0; j < dimension; ++j)
+            {
+                ret[i, j] = it2[j];
+            }
+            ++i;
+        }
+
+        return ret;
+    }
+
+    public static IEnumerable<T[]> FromMultiDimArray<T>(this T[,] it)
+    {
+        for (var i = 0; i < it.GetLength(0); ++i)
+        {
+            var arr = new T[it.GetLength(1)];
+            for (var j = 0; j < arr.Length; ++j)
+            {
+                arr[j] = it[i, j];
+            }
+            yield return arr;
+        }
+    }
+
+    public static T ParseEnumString<T>(string str) where T : Enum
+    {
+        try
+        {
+            return (T)Enum.Parse(typeof(T), str);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new Exception($"Failed to parse {str} into enum of type {typeof(T)}, possible values are {String.Join(",", GetEnumValues<T>())}");
+        }
     }
 }

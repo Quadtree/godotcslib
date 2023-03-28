@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bvh00wfc31qp5"]
+
+[ext_resource type="Script" path="res://cslib/AutoFSR/AutoFSR.cs" id="1_fp1km"]
+
+[node name="AutoFSR" type="Node"]
+script = ExtResource("1_fp1km")

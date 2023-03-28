@@ -43,4 +43,21 @@ public static class Picking
     {
         return PickAtCursor(ctx, dist, collisionMask).Hit;
     }
+
+    public static Vector3? PickPlaneAtCursorAtLevel(Node3D ctx, float level, Viewport viewport = null)
+    {
+        var plane = new Plane(
+            new Vector3(0, level, 0),
+            new Vector3(1, level, 0),
+            new Vector3(1, level, 1)
+        );
+
+        if (viewport == null) viewport = ctx.GetViewport();
+
+        var cam = viewport.GetCamera3D();
+        var raySrc = cam.ProjectRayOrigin(viewport.GetMousePosition());
+        var rayNorm = cam.ProjectRayNormal(viewport.GetMousePosition());
+
+        return plane.IntersectsRay(raySrc, rayNorm);
+    }
 }
