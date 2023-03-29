@@ -140,7 +140,7 @@ class XMLSaveLoadGeneric<T, M>
     {
         AT.True(dirname?.Length > 0);
         var dir = DirAccess.Open(dirname);
-        if (dir != null)
+        if (dir == null)
         {
             var rootDir = DirAccess.Open("user://");
             if (rootDir.MakeDirRecursive(dirname) != Error.Ok)
