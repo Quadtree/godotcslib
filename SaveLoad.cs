@@ -133,7 +133,11 @@ static class SaveLoad<T> where T : new()
     public static void RenameUserFile(string src, string dest)
     {
         var d = DirAccess.Open("user://");
-        d.Rename(src, dest);
+        var status = d.Rename(src, dest);
+        if (status != Error.Ok)
+        {
+            GD.PushError($"Failed to rename {src} to {dest} due to {status}");
+        }
     }
 
     public static void DeleteUserFile(string file)

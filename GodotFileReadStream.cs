@@ -80,6 +80,6 @@ public class GodotFileStream : Stream
         IsClosed = true;
         base.Close();
         File.Flush();
-        // we don't close the file. it seems this method was removed?
+        File.Close();
     }
 }
