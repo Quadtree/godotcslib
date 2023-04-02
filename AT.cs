@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Godot;
 
 public static class AT
@@ -94,19 +95,38 @@ public static class AT
 
         var dt = TimeLimitMap.GetOrCreateValue(obj);
 
-        if ((DateTime.Now - dt.DateTime).TotalSeconds > limitSeconds)
+        var actualTime = (DateTime.Now - dt.DateTime).TotalSeconds;
+        if (actualTime > limitSeconds)
         {
-            Failed($"Time limit of {limitSeconds} exceeded\n{System.Environment.StackTrace}\n{text}", crit);
+            Failed($"Time limit of {limitSeconds} exceeded, actually took {actualTime}\n{System.Environment.StackTrace}\n{text}", crit);
             dt.DateTime = DateTime.Now;
         }
     }
 
     public static void Failed(string msg, bool crit)
     {
+        string pos = "???";
+
+        foreach (var it in System.Environment.StackTrace.Split("\n"))
+        {
+            if (!it.Contains("AT.") && !it.Contains("System.Environment."))
+            {
+                pos = it;
+                break;
+            }
+        }
+
+        var match = Regex.Match(pos, @"(\w+\.\w+):line (\d+)");
+        var posSliced = "???";
+        if (match.Success)
+        {
+            posSliced = $"{match.Groups[1].Value}:{match.Groups[2].Value}";
+        }
+
         if (crit)
-            throw new System.Exception(msg);
+            throw new System.Exception($"{msg} @ {posSliced}");
         else
-            GD.PushError(msg);
+            GD.PushError($"{msg} @ {posSliced}");
     }
 
     public static void ReferenceNotEqual<T>(T a, T b, bool crit = false)

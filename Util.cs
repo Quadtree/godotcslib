@@ -423,6 +423,16 @@ public static class Util
         return rand.Next(minInclusive, maxExclusive);
     }
 
+    public static long RandLong(long minInclusive, long maxExclusive)
+    {
+        return rand.NextInt64(minInclusive, maxExclusive);
+    }
+
+    public static long RandLong()
+    {
+        return rand.NextInt64();
+    }
+
     [Obsolete("Use Random() instead")]
     public static float random()
     {
