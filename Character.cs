@@ -41,7 +41,7 @@ public class Character : KinematicBody
         _camera = GetNode<Camera>("RotationBase/Rotation_Helper/Camera");
         _rotationHelper = GetNode<Spatial>("RotationBase/Rotation_Helper");
 
-        Input.SetMouseMode(Input.MouseModeEnum.Captured);
+        Input.MouseMode = Input.MouseModeEnum.Captured;
 
         CallDeferred(nameof(PostReadySpawn));
     }
@@ -192,12 +192,12 @@ public class Character : KinematicBody
 
     public override void _Input(InputEvent evt)
     {
-        if (evt is InputEventMouseButton && Input.GetMouseMode() != Input.MouseModeEnum.Captured)
+        if (evt is InputEventMouseButton && Input.MouseMode != Input.MouseModeEnum.Captured)
         {
-            Input.SetMouseMode(Input.MouseModeEnum.Captured);
+            Input.MouseMode = Input.MouseModeEnum.Captured;
         }
 
-        if (evt is InputEventMouseMotion && Input.GetMouseMode() == Input.MouseModeEnum.Captured)
+        if (evt is InputEventMouseMotion && Input.MouseMode == Input.MouseModeEnum.Captured)
         {
             InputEventMouseMotion mouseEvent = evt as InputEventMouseMotion;
             _rotationHelper.RotateX(Mathf.Deg2Rad(-mouseEvent.Relative.y * MouseSensitivity));
