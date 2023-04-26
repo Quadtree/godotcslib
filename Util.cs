@@ -78,7 +78,7 @@ public static class Util
 
         var dict = findChildByTypeCache.GetOrCreateValue(node);
 
-        if (dict.ContainsKey(typeof(T)) && dict[typeof(T)].IsInstanceValid())
+        if (dict.ContainsKey(typeof(T)) && dict[typeof(T)].IsInstanceValid() && dict[typeof(T)].IsInsideTree())
         {
             return (T)dict[typeof(T)];
         }

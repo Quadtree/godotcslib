@@ -23,7 +23,7 @@ class XMLSaveLoadGeneric<T, M>
 {
     private const string SAVE_DIRECTORY = "user://saves";
 
-    public static void Save(T inst, string filename = "default", M customMetadata = null)
+    public static void Save(T inst, string filename = "default", M customMetadata = null, IEnumerable<Type> extraKnownTypes = null)
     {
         EnsureDirectoryExists(SAVE_DIRECTORY);
 
@@ -41,7 +41,7 @@ class XMLSaveLoadGeneric<T, M>
                 if (customMetadata == null) customMetadata = new M();
                 customMetadata.Version = CurrentVersion;
                 MetadataSerializer.WriteObject(xmlWriter, customMetadata);
-                Default.WriteObject(xmlWriter, inst);
+                CreateSerializer(extraKnownTypes).WriteObject(xmlWriter, inst);
             }
         }
 
@@ -52,13 +52,16 @@ class XMLSaveLoadGeneric<T, M>
 
     static DataContractSerializer MetadataSerializer => new DataContractSerializer(typeof(M));
 
-    static DataContractSerializer Default => new DataContractSerializer(typeof(T),
+    static DataContractSerializer CreateSerializer(IEnumerable<Type> extraKnownTypes)
+    {
+        return new DataContractSerializer(typeof(T),
             new DataContractSerializerSettings
             {
                 PreserveObjectReferences = true,
-                KnownTypes = CollectKnownTypes(typeof(T)),
+                KnownTypes = CollectKnownTypes(typeof(T)).Concat(extraKnownTypes ?? Array.Empty<Type>()),
                 SerializeReadOnlyTypes = true,
             });
+    }
 
     static Type[] CollectKnownTypes(Type root)
     {
@@ -91,7 +94,7 @@ class XMLSaveLoadGeneric<T, M>
         return closed.ToArray();
     }
 
-    public static Tuple<M, T> LoadWithMetadata(string filename = "default", bool fullLoad = true)
+    public static Tuple<M, T> LoadWithMetadata(string filename = "default", bool fullLoad = true, IEnumerable<Type> extraKnownTypes = null)
     {
         var originalFilename = filename;
         filename = InputNameToPath(filename);
@@ -106,18 +109,18 @@ class XMLSaveLoadGeneric<T, M>
                 var metadata = (M)MetadataSerializer.ReadObject(xmlReader);
                 metadata.Filename = originalFilename;
                 if (fullLoad && metadata.Version != CurrentVersion) throw new InvalidOperationException($"This file was saved with version {metadata.Version} and you are on version {CurrentVersion}. Migration between these two versions is not currently possible.");
-                return Tuple.Create<M, T>(metadata, fullLoad ? (T)Default.ReadObject(xmlReader) : (T)null);
+                return Tuple.Create<M, T>(metadata, fullLoad ? (T)CreateSerializer(extraKnownTypes).ReadObject(xmlReader) : (T)null);
             }
         }
     }
 
-    public static T LoadOrDefault(string filename = "default", Func<T> defaultFactory = null)
+    public static T LoadOrDefault(string filename = "default", Func<T> defaultFactory = null, IEnumerable<Type> extraKnownTypes = null)
     {
         T inst;
 
         try
         {
-            inst = LoadWithMetadata(filename).Item2;
+            inst = LoadWithMetadata(filename, extraKnownTypes: extraKnownTypes).Item2;
         }
         catch (Exception ex)
         {
