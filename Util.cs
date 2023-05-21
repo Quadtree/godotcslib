@@ -815,4 +815,10 @@ public static class Util
 
         return ret;
     }
+
+    public static Vector3 GetBoneWorldPositionByName(this Skeleton3D it, string boneName)
+    {
+        it.ForceUpdateAllBoneTransforms();
+        return it.GlobalTransform * it.GetBoneGlobalPose(it.FindBone(boneName)).Origin;
+    }
 }
