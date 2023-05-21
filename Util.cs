@@ -802,4 +802,17 @@ public static class Util
             throw new Exception($"Failed to parse {str} into enum of type {typeof(T)}, possible values are {String.Join(",", GetEnumValues<T>())}");
         }
     }
+
+    public static string GetFullyQualifiedNodePath(this Node node)
+    {
+        var ret = "";
+
+        while (node != null)
+        {
+            ret = $"/{node.Name}{ret}";
+            node = node.GetParent();
+        }
+
+        return ret;
+    }
 }
