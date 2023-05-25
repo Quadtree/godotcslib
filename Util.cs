@@ -897,4 +897,10 @@ public static class Util
         it.ForceUpdateAllBoneTransforms();
         return it.GlobalTransform * it.GetBoneGlobalPose(it.FindBone(boneName)).Origin;
     }
+
+    public static int? AsInt32OrNull(this Variant variant)
+    {
+        if (variant.VariantType != Variant.Type.Nil) return variant.AsInt32();
+        return null;
+    }
 }
