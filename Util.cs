@@ -878,4 +878,23 @@ public static class Util
         timer.Timeout += target;
         timer.ProcessCallback = duringPhysics ? Timer.TimerProcessCallback.Physics : Timer.TimerProcessCallback.Idle;
     }
+
+    public static string GetFullyQualifiedNodePath(this Node node)
+    {
+        var ret = "";
+
+        while (node != null)
+        {
+            ret = $"/{node.Name}{ret}";
+            node = node.GetParent();
+        }
+
+        return ret;
+    }
+
+    public static Vector3 GetBoneWorldPositionByName(this Skeleton3D it, string boneName)
+    {
+        it.ForceUpdateAllBoneTransforms();
+        return it.GlobalTransform * it.GetBoneGlobalPose(it.FindBone(boneName)).Origin;
+    }
 }
