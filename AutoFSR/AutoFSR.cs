@@ -7,10 +7,12 @@ public partial class AutoFSR : Node
     [Export]
     float TargetFPS = 120f;
 
+    [Export]
     float MinScale = 0.5f;
 
     float AccumError = 0f;
 
+    [Export]
     float GracePeriod = 5f;
 
     // Called when the node enters the scene tree for the first time.
@@ -51,13 +53,14 @@ public partial class AutoFSR : Node
         else
         {
             GetViewport().Scaling3DScale = 1;
-            GetViewport().Scaling3DMode = Viewport.Scaling3DModeEnum.Max;
+            GetViewport().Scaling3DMode = Viewport.Scaling3DModeEnum.Bilinear;
         }
 
         var debugLabel = GetTree().Root.FindChildByName<Label>("FPSDebugInfo");
         if (debugLabel != null)
         {
-            debugLabel.Text = $"Scale={GetViewport().Scaling3DScale} Scaling3DMode={GetViewport().Scaling3DMode} FPS={curFPS} PC={Performance.GetMonitor(Performance.Monitor.RenderTotalPrimitivesInFrame)} AccumError={AccumError}";
+            debugLabel.Text = $"Scale={GetViewport().Scaling3DScale} FPS={curFPS} PC={Performance.GetMonitor(Performance.Monitor.RenderTotalPrimitivesInFrame)} AccumError={AccumError} " +
+                $"NT={Mathf.RoundToInt(Performance.GetMonitor(Performance.Monitor.TimeNavigationProcess) * 1000)} PT={Mathf.RoundToInt(Performance.GetMonitor(Performance.Monitor.TimePhysicsProcess) * 1000)} TT={Mathf.RoundToInt(Performance.GetMonitor(Performance.Monitor.TimeProcess) * 1000)}";
         }
     }
 }

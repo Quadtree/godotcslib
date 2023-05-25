@@ -151,7 +151,7 @@ public static class NodeStateSerializer
 
         foreach (var prop in node.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
         {
-            if (extraProps.Contains(prop.Name) || Attribute.GetCustomAttribute(prop, typeof(NodeSavable)) != null)
+            if ((extraProps.Contains(prop.Name) || Attribute.GetCustomAttribute(prop, typeof(NodeSavable)) != null) && data.ContainsKey(prop.Name))
             {
                 pushDataElement(data[prop.Name], (data) => prop.SetMethod.Invoke(node, new object[] { data }), prop.PropertyType);
             }
@@ -159,7 +159,7 @@ public static class NodeStateSerializer
 
         foreach (var prop in node.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
         {
-            if (extraProps.Contains(prop.Name) || Attribute.GetCustomAttribute(prop, typeof(NodeSavable)) != null)
+            if ((extraProps.Contains(prop.Name) || Attribute.GetCustomAttribute(prop, typeof(NodeSavable)) != null) && data.ContainsKey(prop.Name))
             {
                 pushDataElement(data[prop.Name], (data) => prop.SetValue(node, data), prop.FieldType);
             }

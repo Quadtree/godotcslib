@@ -45,15 +45,40 @@ public static class Util
         );
     }
 
-    public static T FindChildByPredicate<T>(this Node node, Predicate<T> predicate, int maxRecursionDepth = 10) where T : Node
+    private static ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<object, Node>> findChildByPredicateCache = new ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<object, Node>>();
+
+    public static T FindChildByPredicate<T>(this Node node, Predicate<T> predicate, int maxRecursionDepth = 10, object immutableCacheKey = null, Node initialNode = null) where T : Node
     {
+        if (node == null) return null;
+
+        if (immutableCacheKey != null && initialNode == null)
+        {
+            initialNode = node;
+
+            var dict = findChildByPredicateCache.GetOrCreateValue(node);
+
+            Node ret;
+            if (dict.TryGetValue(immutableCacheKey, out ret) && ret.IsInstanceValid() && ret.IsInsideTree())
+            {
+                return (T)ret;
+            }
+        }
+
         var c = node.GetChildCount();
         for (int i = 0; i < c; ++i)
         {
             var n = node.GetChild(i);
             if (n is T)
             {
-                if (predicate.Invoke((T)n)) return (T)n;
+                if (predicate.Invoke((T)n))
+                {
+                    if (immutableCacheKey != null)
+                    {
+                        var dict = findChildByPredicateCache.GetOrCreateValue(initialNode);
+                        dict[immutableCacheKey] = (T)n;
+                    }
+                    return (T)n;
+                }
             }
         }
 
@@ -62,7 +87,7 @@ public static class Util
             for (int i = 0; i < c; ++i)
             {
                 var n = node.GetChild(i);
-                var ret = n.FindChildByPredicate<T>(predicate);
+                var ret = n.FindChildByPredicate<T>(predicate, maxRecursionDepth - 1, immutableCacheKey, initialNode);
                 if (ret != null) return ret;
             }
         }
@@ -72,15 +97,21 @@ public static class Util
 
     private static ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<Type, Node>> findChildByTypeCache = new ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<Type, Node>>();
 
-    public static T FindChildByType<T>(this Node node, int maxRecursionDepth = 10) where T : Node
+    public static T FindChildByType<T>(this Node node, int maxRecursionDepth = 10, Node initialNode = null) where T : Node
     {
         if (node == null) return null;
 
-        var dict = findChildByTypeCache.GetOrCreateValue(node);
-
-        if (dict.ContainsKey(typeof(T)) && dict[typeof(T)].IsInstanceValid() && dict[typeof(T)].IsInsideTree())
+        if (initialNode == null)
         {
-            return (T)dict[typeof(T)];
+            initialNode = node;
+
+            var dict = findChildByTypeCache.GetOrCreateValue(node);
+
+            Node ret;
+            if (dict.TryGetValue(typeof(T), out ret) && ret.IsInstanceValid() && ret.IsInsideTree())
+            {
+                return (T)ret;
+            }
         }
 
         var c = node.GetChildCount();
@@ -90,6 +121,7 @@ public static class Util
 
             if (n is T)
             {
+                var dict = findChildByTypeCache.GetOrCreateValue(initialNode);
                 dict[typeof(T)] = (T)n;
                 return (T)n;
             }
@@ -100,7 +132,7 @@ public static class Util
             for (int i = 0; i < c; ++i)
             {
                 var n = node.GetChild(i);
-                var ret = n.FindChildByType<T>(maxRecursionDepth - 1);
+                var ret = n.FindChildByType<T>(maxRecursionDepth - 1, initialNode);
                 if (ret != null) return ret;
             }
         }
@@ -132,15 +164,21 @@ public static class Util
 
     private static ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<string, Node>> findChildByNameCache = new ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<string, Node>>();
 
-    public static T FindChildByName<T>(this Node node, string name, int maxRecursionDepth = 10) where T : Node
+    public static T FindChildByName<T>(this Node node, string name, int maxRecursionDepth = 10, Node initialNode = null) where T : Node
     {
         if (node == null || name == null) return null;
 
-        var dict = findChildByNameCache.GetOrCreateValue(node);
-
-        if (dict.ContainsKey(name) && dict[name].IsInstanceValid())
+        if (initialNode == null)
         {
-            return (T)dict[name];
+            initialNode = node;
+
+            var dict = findChildByNameCache.GetOrCreateValue(node);
+
+            Node ret;
+            if (dict.TryGetValue(name, out ret) && ret.IsInstanceValid() && ret.IsInsideTree())
+            {
+                return (T)ret;
+            }
         }
 
         var c = node.GetChildCount();
@@ -152,6 +190,8 @@ public static class Util
             {
                 if (n is T)
                 {
+                    var dict = findChildByNameCache.GetOrCreateValue(initialNode);
+                    dict[name] = (T)n;
                     return (T)n;
                 }
                 else
@@ -166,7 +206,7 @@ public static class Util
             for (int i = 0; i < c; ++i)
             {
                 var n = node.GetChild(i);
-                var ret = n.FindChildByName<T>(name, maxRecursionDepth - 1);
+                var ret = n.FindChildByName<T>(name, maxRecursionDepth - 1, initialNode);
                 if (ret != null) return ret;
             }
         }
@@ -571,12 +611,12 @@ public static class Util
         particles.AddChild(timer);
     }
 
-    public static void SpawnOneShotSound(string resName, Node contextNode, Vector3 location)
+    public static void SpawnOneShotSound(string resName, Node contextNode, Vector3 location, float volume = 15f, float pitchMod = 1f)
     {
-        Util.SpawnOneShotSound((AudioStream)GD.Load(resName), contextNode, location);
+        Util.SpawnOneShotSound((AudioStream)GD.Load(resName), contextNode, location, volume, pitchMod);
     }
 
-    public static void SpawnOneShotSound(AudioStream sample, Node contextNode, Vector3 location)
+    public static void SpawnOneShotSound(AudioStream sample, Node contextNode, Vector3 location, float volume = 15f, float pitchMod = 1f)
     {
         if (sample == null) return;
 
@@ -611,7 +651,11 @@ public static class Util
         {
             availExisting.SetGlobalLocation(location);
             availExisting.Stream = sample;
-            availExisting.VolumeDb = 15;
+            availExisting.VolumeDb = volume;
+            availExisting.AttenuationModel = AudioStreamPlayer3D.AttenuationModelEnum.InverseSquareDistance;
+            availExisting.DopplerTracking = AudioStreamPlayer3D.DopplerTrackingEnum.PhysicsStep;
+            availExisting.PitchScale = pitchMod;
+
             availExisting.Play();
         }
     }
@@ -801,5 +845,37 @@ public static class Util
         {
             throw new Exception($"Failed to parse {str} into enum of type {typeof(T)}, possible values are {String.Join(",", GetEnumValues<T>())}");
         }
+    }
+
+    public static void StartStaggeredPeriodicTimer(Node root, float interval, Action target, bool duringPhysics = false)
+    {
+        var timer = new Timer();
+        root.AddChild(timer);
+        timer.OneShot = false;
+        timer.Start(Util.Random() * interval);
+        timer.WaitTime = interval;
+        timer.Timeout += target;
+        timer.ProcessCallback = duringPhysics ? Timer.TimerProcessCallback.Physics : Timer.TimerProcessCallback.Idle;
+    }
+
+    public static void StartStaggeredPeriodicTimer(Node root, float interval, Action<float> target, bool duringPhysics = false)
+    {
+        StartStaggeredPeriodicTimer(root, interval, () => target(interval), duringPhysics);
+    }
+
+    public static void StartStaggeredPeriodicTimerWith10TicksPerSecond(Node root, float interval, Action<int> target, bool duringPhysics = false)
+    {
+        var ticks = Mathf.RoundToInt(interval * 10);
+        StartStaggeredPeriodicTimer(root, interval, () => target(ticks), duringPhysics);
+    }
+
+    public static void StartOneShotTimer(Node root, float time, Action target, bool duringPhysics = false)
+    {
+        var timer = new Timer();
+        root.AddChild(timer);
+        timer.OneShot = true;
+        timer.Start(time);
+        timer.Timeout += target;
+        timer.ProcessCallback = duringPhysics ? Timer.TimerProcessCallback.Physics : Timer.TimerProcessCallback.Idle;
     }
 }

@@ -23,7 +23,7 @@ public static class UIUtil
 
     public static bool IsPopupOpen(Node ctx)
     {
-        return ctx.GetTree().Root.FindChildByPredicate<Popup>(it => it.Visible, 20) != null;
+        return ctx.GetTree().Root.FindChildByPredicate<Popup>(it => it.Visible, 20, "IsVisible") != null;
     }
 
     public static Node GetUIRoot(Node ctx)
