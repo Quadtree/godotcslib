@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3 uid="uid://bkghaa51fg7gm"]
+
+[ext_resource type="Script" path="res://cslib/asynclib/ShaderPrecompiler.cs" id="1_h6n3c"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_3q858"]
+
+[sub_resource type="Environment" id="Environment_kb76b"]
+tonemap_mode = 3
+ssil_enabled = true
+glow_blend_mode = 0
+
+[node name="ShaderPrecompiler" type="Node3D"]
+script = ExtResource("1_h6n3c")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_3q858")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.83522)
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.33723, 1.83522)
+shadow_enabled = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.400749, 0.916188, 0, -0.916188, 0.400749, 0, 1.35183, 0.591302)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_kb76b")

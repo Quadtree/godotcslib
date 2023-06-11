@@ -9,6 +9,8 @@ using Godot;
 [DataContract]
 public class NodeSaveState
 {
+    [DataMember] public string SceneFilePath;
+
     [DataMember] public Dictionary<string, NodeSaveElement> Data = new Dictionary<string, NodeSaveElement>();
 }
 
@@ -35,6 +37,8 @@ public static class NodeStateSerializer
     {
         var dataToSave = new NodeSaveState();
         var types = new HashSet<Type>();
+
+        dataToSave.SceneFilePath = scene.SceneFilePath;
 
         foreach (var it in scene.FindChildrenByType<Node>().Where(it => Attribute.GetCustomAttribute(it.GetType(), typeof(NodeSavable)) != null))
         {

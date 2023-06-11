@@ -613,7 +613,12 @@ public static class Util
 
     public static void SpawnOneShotSound(string resName, Node contextNode, Vector3 location, float volume = 15f, float pitchMod = 1f)
     {
-        Util.SpawnOneShotSound((AudioStream)GD.Load(resName), contextNode, location, volume, pitchMod);
+        var t = AT.TimeLimit();
+        ResourceLoadMonitor.StartLoading<AudioStream>(resName, contextNode, (audioStream) =>
+        {
+            Util.SpawnOneShotSound(audioStream, contextNode, location, volume, pitchMod);
+        }, _ => { });
+        t.Limit(0.001f);
     }
 
     public static void SpawnOneShotSound(AudioStream sample, Node contextNode, Vector3 location, float volume = 15f, float pitchMod = 1f)
@@ -902,5 +907,39 @@ public static class Util
     {
         if (variant.VariantType != Variant.Type.Nil) return variant.AsInt32();
         return null;
+    }
+
+    public static void SwitchScenes(Node contextNode, Node newScene)
+    {
+        GD.Print($"SwitchScenes({contextNode}, {newScene})");
+        var tree = contextNode.GetTree();
+        var oldScene = tree.CurrentScene;
+        oldScene.ProcessMode = Node.ProcessModeEnum.Disabled;
+        oldScene.QueueFree();
+        tree.Root.RemoveChild(oldScene);
+        tree.Root.AddChild(newScene);
+        tree.CurrentScene = newScene;
+    }
+
+    public static void HandleError<T>(this Task<T> task)
+    {
+        task.ContinueWith(res =>
+        {
+            if (res.Exception != null)
+            {
+                GD.PushError(res.Exception);
+            }
+        });
+    }
+
+    public static void HandleError(this Task task)
+    {
+        task.ContinueWith(res =>
+        {
+            if (res.Exception != null)
+            {
+                GD.PushError(res.Exception);
+            }
+        });
     }
 }

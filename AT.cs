@@ -89,9 +89,9 @@ public static class AT
 
     private static ConditionalWeakTable<object, TimeLimitHolder> TimeLimitMap = new ConditionalWeakTable<object, TimeLimitHolder>();
 
-    public static void TimeLimit<T>(T obj, string text = "", float? limitSeconds = 5, bool crit = false) where T : class
+    public static object TimeLimit(object obj, string text = "", float? limitSeconds = 5, bool crit = false)
     {
-        if (!OS.IsDebugBuild() || limitSeconds == null || obj == null) return;
+        if (!OS.IsDebugBuild() || limitSeconds == null || obj == null) return obj;
 
         var dt = TimeLimitMap.GetOrCreateValue(obj);
 
@@ -101,6 +101,57 @@ public static class AT
             Failed($"Time limit of {limitSeconds} exceeded, actually took {actualTime}\n{System.Environment.StackTrace}\n{text}", crit);
             dt.DateTime = DateTime.Now;
         }
+
+        return obj;
+    }
+
+    public struct TimeLimiter
+    {
+        public ulong StartTime = Time.GetTicksUsec();
+
+        public int[] StartingGCS = new int[]{
+            GC.CollectionCount(0),
+            GC.CollectionCount(1),
+            GC.CollectionCount(2),
+        };
+
+        public TimeLimiter() { }
+
+        public void Limit(float limitSeconds, string text = "", bool crit = false)
+        {
+            var limitSecondsUsec = (ulong)(limitSeconds * 1_000_000f);
+            var elapsedTimeUsec = (Time.GetTicksUsec() - StartTime);
+
+            if (elapsedTimeUsec > limitSecondsUsec)
+            {
+                if (GC.CollectionCount(0) != StartingGCS[0] || GC.CollectionCount(1) != StartingGCS[1] || GC.CollectionCount(2) != StartingGCS[2])
+                {
+                    //GD.PushWarning("Time limit was exceeded, but GC was detected during timing");
+                }
+                else
+                {
+                    if (limitSecondsUsec < 1_000)
+                    {
+                        Failed($"Time limit of {limitSecondsUsec}μs exceeded, actually took {elapsedTimeUsec}μs\n{System.Environment.StackTrace}\n{text}", crit);
+                    }
+                    else if (limitSeconds < 1_000_000)
+                    {
+                        Failed($"Time limit of {limitSecondsUsec / 1_000}ms exceeded, actually took {elapsedTimeUsec / 1_000}ms\n{System.Environment.StackTrace}\n{text}", crit);
+                    }
+                    else
+                    {
+                        Failed($"Time limit of {limitSeconds} exceeded, actually took {new TimeSpan((long)(elapsedTimeUsec * 10))}\n{System.Environment.StackTrace}\n{text}", crit);
+                    }
+                }
+            }
+
+            StartTime = Time.GetTicksUsec();
+        }
+    }
+
+    public static TimeLimiter TimeLimit()
+    {
+        return new TimeLimiter();
     }
 
     public static void Failed(string msg, bool crit)
