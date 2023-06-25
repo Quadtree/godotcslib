@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Godot;
 
 public static class AT
@@ -80,6 +81,12 @@ public static class AT
     {
         if (!OS.IsDebugBuild()) return;
         if (System.Threading.Thread.CurrentThread.ManagedThreadId != 1) Failed($"We are on thread with ID {System.Threading.Thread.CurrentThread.ManagedThreadId}, expected 1", crit);
+    }
+
+    public static void OnOwningThread(object obj, bool crit = false)
+    {
+        if (!OS.IsDebugBuild()) return;
+        if (!Monitor.IsEntered(obj)) Failed($"Current thread with ID {System.Threading.Thread.CurrentThread.ManagedThreadId}, does not own monitor on {obj}", crit);
     }
 
     class TimeLimitHolder

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -239,15 +240,19 @@ public static class Util
     {
         SerializationLog($"Serializing a {type}");
         if (type == typeof(System.Int32)) { WriteAll(mem, BitConverter.GetBytes((int)obj)); return; }
-        if (type == typeof(long)) { WriteAll(mem, BitConverter.GetBytes((long)obj)); return; }
+        if (type == typeof(long) || type == typeof(System.Int64)) { WriteAll(mem, BitConverter.GetBytes((long)obj)); return; }
+        if (type == typeof(ulong)) { WriteAll(mem, BitConverter.GetBytes((ulong)obj)); return; }
+        if (type == typeof(short)) { WriteAll(mem, BitConverter.GetBytes((short)obj)); return; }
+        if (type == typeof(ushort)) { WriteAll(mem, BitConverter.GetBytes((ushort)obj)); return; }
         if (type == typeof(float))
         {
             //Console.WriteLine($"It is a {type} / {obj.GetType()}");
-            SerializationLog($"The single is {(float)obj}");
-            WriteAll(mem, BitConverter.GetBytes((float)obj));
+            SerializationLog($"The single is {(Half)(float)obj}");
+            WriteAll(mem, BitConverter.GetBytes((Half)(float)obj));
             return;
         }
         if (type == typeof(double)) { WriteAll(mem, BitConverter.GetBytes((double)obj)); return; }
+        if (type == typeof(Half)) { WriteAll(mem, BitConverter.GetBytes((Half)obj)); return; }
         if (type.IsEnum)
         {
             WriteAll(mem, BitConverter.GetBytes((int)obj));
@@ -271,6 +276,11 @@ public static class Util
             WriteAll(mem, new byte[] { (byte)obj });
             return;
         }
+        if (type == typeof(sbyte))
+        {
+            WriteAll(mem, new byte[] { unchecked((byte)(sbyte)obj) });
+            return;
+        }
         if (type == typeof(bool))
         {
             WriteAll(mem, BitConverter.GetBytes((bool)obj));
@@ -283,6 +293,16 @@ public static class Util
             foreach (var o in ((System.Collections.IList)obj))
             {
                 ObjToBytes(o, type.GenericTypeArguments[0], mem);
+            }
+            return;
+        }
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            WriteAll(mem, new byte[] { (byte)(obj != null ? 1 : 0) });
+
+            if (obj != null)
+            {
+                WriteAll(mem, ObjToBytes(obj, type.GetGenericArguments()[0]));
             }
             return;
         }
@@ -303,7 +323,7 @@ public static class Util
             return;
         }
 
-        SerializationLog($"Seems it's some kind of object");
+        SerializationLog($"Seems it's some kind of object {obj.GetType()}");
 
         foreach (var field in obj.GetType().GetFields())
         {
@@ -340,11 +360,31 @@ public static class Util
             mem.Read(buffer, 0, 8);
             return BitConverter.ToInt64(buffer, 0);
         }
+        if (type == typeof(ulong))
+        {
+            mem.Read(buffer, 0, 8);
+            return BitConverter.ToUInt64(buffer, 0);
+        }
+        if (type == typeof(short))
+        {
+            mem.Read(buffer, 0, 2);
+            return BitConverter.ToInt16(buffer, 0);
+        }
+        if (type == typeof(ushort))
+        {
+            mem.Read(buffer, 0, 2);
+            return BitConverter.ToUInt16(buffer, 0);
+        }
         if (type == typeof(float))
         {
-            mem.Read(buffer, 0, 4);
+            mem.Read(buffer, 0, 2);
             SerializationLog($"The single is {BitConverter.ToSingle(buffer, 0)}");
-            return BitConverter.ToSingle(buffer, 0);
+            return (float)BitConverter.ToHalf(buffer, 0);
+        }
+        if (type == typeof(Half))
+        {
+            mem.Read(buffer, 0, 2);
+            return BitConverter.ToHalf(buffer, 0);
         }
         if (type == typeof(int))
         {
@@ -355,6 +395,11 @@ public static class Util
         {
             mem.Read(buffer, 0, 1);
             return buffer[0];
+        }
+        if (type == typeof(sbyte))
+        {
+            mem.Read(buffer, 0, 1);
+            return unchecked((sbyte)buffer[0]);
         }
         if (type.IsEnum)
         {
@@ -383,6 +428,8 @@ public static class Util
             mem.Read(buffer, 0, 4);
             var len = BitConverter.ToInt32(buffer, 0);
 
+            if (len == -1) return null;
+
             System.Collections.IList ret = (System.Collections.IList)Activator.CreateInstance(type);
 
             for (int i = 0; i < len; ++i)
@@ -392,10 +439,29 @@ public static class Util
 
             return ret;
         }
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            mem.Read(buffer, 0, 1);
+
+            if (buffer[0] == 1)
+            {
+                SerializationLog($"Creating non-null Nullable with type {type.GetGenericArguments()[0]}");
+                return Activator.CreateInstance(type, BytesToObj(mem, type.GetGenericArguments()[0]));
+            }
+            else
+            {
+                return Activator.CreateInstance(type);
+            }
+        }
         if (type.IsArray)
         {
             mem.Read(buffer, 0, 4);
             var len = BitConverter.ToInt32(buffer, 0);
+
+            if (len == -1) return null;
+
+            AT.True(len < 2_000_000_000);
+            AT.True(len >= 0);
 
             System.Collections.IList ret = (System.Collections.IList)Activator.CreateInstance(type, len);
 
@@ -659,6 +725,56 @@ public static class Util
             availExisting.VolumeDb = volume;
             availExisting.AttenuationModel = AudioStreamPlayer3D.AttenuationModelEnum.InverseSquareDistance;
             availExisting.DopplerTracking = AudioStreamPlayer3D.DopplerTrackingEnum.PhysicsStep;
+            availExisting.PitchScale = pitchMod;
+
+            availExisting.Play();
+        }
+    }
+
+    public static void SpawnOneShotSound(string resName, Node contextNode, Vector2 location, float volume = 15f, float pitchMod = 1f, float falloffRate = 0.5f)
+    {
+        ResourceLoadMonitor.StartLoading<AudioStream>(resName, contextNode, (audioStream) =>
+        {
+            Util.SpawnOneShotSound(audioStream, contextNode, location, volume, pitchMod, falloffRate);
+        }, _ => { });
+    }
+
+    public static void SpawnOneShotSound(AudioStream sample, Node contextNode, Vector2 location, float volume = 15f, float pitchMod = 1f, float falloffRate = 0.5f)
+    {
+        if (sample == null) return;
+
+        var r = contextNode.GetTree().CurrentScene;
+        var c = r.GetChildCount();
+
+        var existingCount = 0;
+        AudioStreamPlayer2D availExisting = null;
+
+        for (int i = 0; i < c; ++i)
+        {
+            var n = r.GetChild(i);
+            if (n is AudioStreamPlayer2D)
+            {
+                existingCount++;
+
+                if (!((AudioStreamPlayer2D)n).Playing)
+                {
+                    availExisting = (AudioStreamPlayer2D)n;
+                    break;
+                }
+            }
+        }
+
+        if (availExisting == null && existingCount < 10)
+        {
+            availExisting = new AudioStreamPlayer2D();
+            contextNode.GetTree().CurrentScene.AddChild(availExisting);
+        }
+
+        if (availExisting != null)
+        {
+            availExisting.GlobalPosition = location;
+            availExisting.Stream = sample;
+            availExisting.VolumeDb = volume - contextNode.GetTree().Root.GetCamera2D().GlobalPosition.DistanceTo(location) * falloffRate;
             availExisting.PitchScale = pitchMod;
 
             availExisting.Play();

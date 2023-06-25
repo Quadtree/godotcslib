@@ -60,4 +60,9 @@ public static class Picking
 
         return plane.IntersectsRay(raySrc, rayNorm);
     }
+
+    public static Vector2 UnprojectAtCursor(Camera2D cam)
+    {
+        return cam.GetViewport().CanvasTransform.AffineInverse() * cam.GetViewport().GetMousePosition();
+    }
 }
