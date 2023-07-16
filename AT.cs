@@ -10,83 +10,103 @@ public static class AT
 {
     public static void True(bool cond, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         Eq(cond, true, crit);
+#endif
     }
 
     public static void LessThan<T>(T a, T b, bool crit = false) where T : IComparable<T>
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (a.CompareTo(b) >= 0) Failed($"Expected {a} < {b}", crit);
+#endif
+    }
+
+    public static void GreaterThan<T>(T a, T b, bool crit = false) where T : IComparable<T>
+    {
+#if TOOLS
+        if (a.CompareTo(b) <= 0) Failed($"Expected {a} > {b}", crit);
+#endif
     }
 
     public static void Within<T>(T v, T min, T max, bool crit = false) where T : IComparable<T>
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (v.CompareTo(max) > 0) Failed($"Expected {v} <= {max}", crit);
         if (v.CompareTo(min) < 0) Failed($"Expected {v} >= {min}", crit);
+#endif
     }
 
     public static T Null<T>(T val, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return val;
+#if TOOLS
         if (val != null) Failed("Expected null", crit);
+#endif
         return val;
     }
 
     public static T NotNull<T>(T val, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return val;
+#if TOOLS
         if (val == null) Failed("Expected non-null", crit);
+#endif
         return val;
     }
 
     public static void Eq<T>(T a, T b, bool crit = false) where T : IEquatable<T>
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (!a.Equals(b)) Failed($"Expected {a} = {b}", crit);
+#endif
     }
 
     public static void NotEq<T>(T a, T b, bool crit = false) where T : IEquatable<T>
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (a.Equals(b)) Failed($"Expected {a} != {b}", crit);
+#endif
     }
 
     public static void Contains<T>(IEnumerable<T> en, T v, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (!en.Contains(v)) Failed($"Expected [{String.Join(", ", en)}] to contain {v}", crit);
+#endif
     }
 
     public static void Disjoint<T>(IEnumerable<T> a, IEnumerable<T> b, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (a.Intersect(b).Any()) Failed("Unexpected intersection", crit);
+#endif
     }
 
     public static void DoesNotContain<T>(IEnumerable<T> en, T v, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (en.Contains(v)) Failed($"Expected [{String.Join(", ", en)}] to NOT contain {v}", crit);
+#endif
     }
 
     public static void NoDuplicates<T>(IEnumerable<T> en, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (en.Distinct().Count() != en.Count()) Failed($"Expected {en.Distinct().Count()} = {en.Count()}", crit);
+#endif
     }
 
     public static void OnMainThread(bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (System.Threading.Thread.CurrentThread.ManagedThreadId != 1) Failed($"We are on thread with ID {System.Threading.Thread.CurrentThread.ManagedThreadId}, expected 1", crit);
+#endif
     }
 
     public static void OnOwningThread(object obj, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (!Monitor.IsEntered(obj)) Failed($"Current thread with ID {System.Threading.Thread.CurrentThread.ManagedThreadId}, does not own monitor on {obj}", crit);
+#endif
     }
 
     class TimeLimitHolder
@@ -98,6 +118,7 @@ public static class AT
 
     public static object TimeLimit(object obj, string text = "", float? limitSeconds = 5, bool crit = false)
     {
+#if TOOLS
         if (!OS.IsDebugBuild() || limitSeconds == null || obj == null) return obj;
 
         var dt = TimeLimitMap.GetOrCreateValue(obj);
@@ -108,6 +129,7 @@ public static class AT
             Failed($"Time limit of {limitSeconds} exceeded, actually took {actualTime}\n{System.Environment.StackTrace}\n{text}", crit);
             dt.DateTime = DateTime.Now;
         }
+#endif
 
         return obj;
     }
@@ -189,7 +211,8 @@ public static class AT
 
     public static void ReferenceNotEqual<T>(T a, T b, bool crit = false)
     {
-        if (!OS.IsDebugBuild()) return;
+#if TOOLS
         if (System.Object.ReferenceEquals(a, b)) Failed($"Expected {a} !ref= {b}", crit);
+#endif
     }
 }

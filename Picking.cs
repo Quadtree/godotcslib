@@ -61,8 +61,13 @@ public static class Picking
         return plane.IntersectsRay(raySrc, rayNorm);
     }
 
-    public static Vector2 UnprojectAtCursor(Camera2D cam)
+    public static Vector2 UnprojectAtCursor(Camera2D cam, Vector2? cursorOffset = null)
     {
-        return cam.GetViewport().CanvasTransform.AffineInverse() * cam.GetViewport().GetMousePosition();
+        return cam.GetViewport().CanvasTransform.AffineInverse() * (cam.GetViewport().GetMousePosition() + (cursorOffset ?? Vector2.Zero));
+    }
+
+    public static Vector2 ProjectAtPoint(Camera2D cam, Vector2 point)
+    {
+        return cam.GetViewport().CanvasTransform * point;
     }
 }
