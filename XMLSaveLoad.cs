@@ -9,10 +9,11 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using Godot;
 
+[DataContract]
 public class SaveLoadMetadata
 {
-    public int Version;
-    public string Filename;
+    [DataMember] public int Version;
+    [DataMember] public string Filename;
 }
 
 class XMLSaveLoad<T> : XMLSaveLoadGeneric<T, SaveLoadMetadata> where T : class, new() { }
@@ -23,14 +24,14 @@ class XMLSaveLoadGeneric<T, M>
 {
     private const string SAVE_DIRECTORY = "user://saves";
 
-    public static void Save(T inst, string filename = "default", M customMetadata = null, IEnumerable<Type> extraKnownTypes = null)
+    public static void Save(T inst, string filename = "default", M customMetadata = null, IEnumerable<Type> extraKnownTypes = null, bool compression = false)
     {
         EnsureDirectoryExists(SAVE_DIRECTORY);
 
-        filename = InputNameToPath(filename);
+        filename = InputNameToPath(filename, compression);
         var tmpFileName = $"{filename}.tmp";
 
-        using (var stream = new GodotFileStream(tmpFileName, FileAccess.ModeFlags.Write))
+        using (var stream = CompressionWrap(new GodotFileStream(tmpFileName, Godot.FileAccess.ModeFlags.Write), System.IO.Compression.CompressionMode.Compress, compression))
         {
             using (var xmlWriter = XmlDictionaryWriter.Create(stream, new XmlWriterSettings
             {
@@ -94,12 +95,12 @@ class XMLSaveLoadGeneric<T, M>
         return closed.ToArray();
     }
 
-    public static Tuple<M, T> LoadWithMetadata(string filename = "default", bool fullLoad = true, IEnumerable<Type> extraKnownTypes = null)
+    public static Tuple<M, T> LoadWithMetadata(string filename = "default", bool fullLoad = true, IEnumerable<Type> extraKnownTypes = null, bool compression = false)
     {
         var originalFilename = filename;
-        filename = InputNameToPath(filename);
+        filename = InputNameToPath(filename, compression);
 
-        using (var stream = new GodotFileStream(filename, FileAccess.ModeFlags.Read))
+        using (var stream = CompressionWrap(new GodotFileStream(filename, FileAccess.ModeFlags.Read), System.IO.Compression.CompressionMode.Decompress, compression))
         {
             using (var xmlReader = XmlDictionaryReader.Create(stream, new XmlReaderSettings
             {
@@ -114,13 +115,13 @@ class XMLSaveLoadGeneric<T, M>
         }
     }
 
-    public static T LoadOrDefault(string filename = "default", Func<T> defaultFactory = null, IEnumerable<Type> extraKnownTypes = null)
+    public static T LoadOrDefault(string filename = "default", Func<T> defaultFactory = null, IEnumerable<Type> extraKnownTypes = null, bool compression = false)
     {
         T inst;
 
         try
         {
-            inst = LoadWithMetadata(filename, extraKnownTypes: extraKnownTypes).Item2;
+            inst = LoadWithMetadata(filename, extraKnownTypes: extraKnownTypes, compression: compression).Item2;
         }
         catch (Exception ex)
         {
@@ -134,9 +135,9 @@ class XMLSaveLoadGeneric<T, M>
         return inst;
     }
 
-    private static string InputNameToPath(string filename)
+    private static string InputNameToPath(string filename, bool compression = false)
     {
-        return $"{SAVE_DIRECTORY}/{filename}.xml";
+        return $"{SAVE_DIRECTORY}/{filename}.xml{(compression ? ".gz" : "")}";
     }
 
     public static void EnsureDirectoryExists(string dirname)
@@ -242,6 +243,11 @@ class XMLSaveLoadGeneric<T, M>
     private static void DeleteUserFile(string file)
     {
         SaveLoad<T>.DeleteUserFile(file);
+    }
+
+    private static System.IO.Stream CompressionWrap(System.IO.Stream stream, System.IO.Compression.CompressionMode mode, bool compression)
+    {
+        return compression ? new System.IO.Compression.GZipStream(stream, mode) : stream;
     }
 
     public static int CurrentVersion => (Attribute.GetCustomAttribute(typeof(T), typeof(HasVersion)) as HasVersion)?.VERSION ?? 0;

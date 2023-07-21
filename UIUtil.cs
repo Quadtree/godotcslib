@@ -41,4 +41,11 @@ public static class UIUtil
         //GD.Print(lines.Count);
         return string.Join("\n", lines);
     }
+
+    public static string GetActionKey(string action)
+    {
+        var evts = InputMap.ActionGetEvents(action);
+
+        return evts[0].AsText().Replace(" (Physical)", "");
+    }
 }

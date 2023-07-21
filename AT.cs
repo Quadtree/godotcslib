@@ -102,6 +102,7 @@ public static class AT
 #endif
     }
 
+    // assert that the current thread has an exclusive lock on this object
     public static void OnOwningThread(object obj, bool crit = false)
     {
 #if TOOLS

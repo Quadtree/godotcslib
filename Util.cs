@@ -639,6 +639,30 @@ public static class Util
         }
     }
 
+    public static void SpawnOneShotParticleSystem2D(string system, Node contextNode, Vector2 location)
+    {
+        ResourceLoadMonitor.ThreadedInstantiateAsync<GpuParticles2D>(system, contextNode)
+            .Then(res => SpawnOneShotParticleSystem2D(res, contextNode, location), GD.PushError);
+    }
+
+    public static void SpawnOneShotParticleSystem2D(GpuParticles2D particles, Node contextNode, Vector2 location)
+    {
+        if (particles == null) return;
+
+        contextNode.GetTree().CurrentScene.AddChild(particles);
+
+        particles.GlobalPosition = location;
+
+        particles.OneShot = true;
+        particles.Emitting = true;
+
+        var timer = new Timer();
+        timer.Autostart = true;
+        timer.WaitTime = 5;
+        timer.Connect("timeout", new Callable(particles, "queue_free"));
+        particles.AddChild(timer);
+    }
+
     public static void SpawnOneShotParticleSystem(PackedScene system, Node contextNode, Vector3 location)
     {
         if (system == null) return;
@@ -680,10 +704,12 @@ public static class Util
     public static void SpawnOneShotSound(string resName, Node contextNode, Vector3 location, float volume = 15f, float pitchMod = 1f)
     {
         var t = AT.TimeLimit();
+
         ResourceLoadMonitor.StartLoading<AudioStream>(resName, contextNode, (audioStream) =>
         {
             Util.SpawnOneShotSound(audioStream, contextNode, location, volume, pitchMod);
         }, _ => { });
+
         t.Limit(0.001f);
     }
 
@@ -861,16 +887,18 @@ public static class Util
         yield return v;
     }
 
-    /*public static void TakeScreenshot(Node ctx)
+    public static void TakeScreenshot(Node ctx)
     {
-        var image = ctx.GetViewport().GetTexture().GetData();
-        image.FlipY();
-        var dir = new Godot.Directory();
-        dir.Open("user://");
-        dir.MakeDir("screenshots");
+        var image = ctx.GetViewport().GetTexture().GetImage();
 
-        image.SavePng($"user://screenshots/{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss")}.png");
-    }*/
+        Task.Run(() =>
+        {
+            var dir = Godot.DirAccess.Open("user://");
+            dir.MakeDir("screenshots");
+
+            image.SavePng($"user://screenshots/{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss")}.png");
+        }).HandleError();
+    }
 
     public static int Square(int n)
     {
@@ -880,30 +908,6 @@ public static class Util
     public static IReadOnlyCollection<T> GetEnumValues<T>() where T : Enum
     {
         return (IReadOnlyCollection<T>)Enum.GetValues(typeof(T));
-    }
-
-    // There is a bug in Godot where if you use ContinueWith() in HTML5 it will crash
-    // This function can be used until the bug is likely fixed in 4.0
-    public static void SafeContinueWith(this Task task, Action callback)
-    {
-        _SafeContinueWith(task, callback);
-    }
-
-    private static async Task _SafeContinueWith(Task task, Action callback)
-    {
-        await task;
-        if (callback != null) callback();
-    }
-
-    public static void SafeContinueWith<T>(this Task<T> task, Action<T> callback)
-    {
-        _SafeContinueWith(task, callback);
-    }
-
-    private static async Task _SafeContinueWith<T>(Task<T> task, Action<T> callback)
-    {
-        T data = await task;
-        if (callback != null) callback(data);
     }
 
     public static Error Connect(this Node node, string signal, Action @delegate)
@@ -1039,23 +1043,51 @@ public static class Util
 
     public static void HandleError<T>(this Task<T> task)
     {
-        task.ContinueWith(res =>
+        task.Then(() => { }, res =>
         {
-            if (res.Exception != null)
+            if (res != null)
             {
-                GD.PushError(res.Exception);
+                GD.PushError(res);
             }
         });
     }
 
     public static void HandleError(this Task task)
     {
-        task.ContinueWith(res =>
+        task.Then(() => { }, res =>
         {
-            if (res.Exception != null)
+            if (res != null)
             {
-                GD.PushError(res.Exception);
+                GD.PushError(res);
             }
         });
+    }
+
+    public static void ChangeSceneAndExecuteOnNewScene<T>(string sceneFileName, Node ctx, Action<T> func) where T : Node
+    {
+        var tree = ctx.GetTree();
+        tree.ChangeSceneToFile(sceneFileName);
+
+        Godot.Node.ChildEnteredTreeEventHandler eventHandler = null;
+        eventHandler = ch =>
+        {
+            if (ch is T)
+            {
+                func((T)ch);
+                tree.Root.ChildEnteredTree -= eventHandler;
+            }
+            else if (tree.CurrentScene == ch)
+            {
+                GD.PushWarning($"It looks like we changed the scene to a {ch}, when we were expecting a {typeof(T)}");
+                tree.Root.ChildEnteredTree -= eventHandler;
+            }
+        };
+
+        tree.Root.ChildEnteredTree += eventHandler;
+    }
+
+    public static float AbsoluteAngleBetween(float angle1, float angle2)
+    {
+        return Mathf.Abs(Vector2.Right.Rotated(angle1).AngleTo(Vector2.Right.Rotated(angle2)));
     }
 }

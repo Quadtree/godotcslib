@@ -18,7 +18,13 @@ public partial class ResourceLoadMonitor : Node
         public Action<Exception> ErrorHandler;
     }
 
-    Dictionary<string, List<LoadingRequest>> Monitored = new Dictionary<string, List<LoadingRequest>>();
+    class MonitoredItem
+    {
+        public List<LoadingRequest> Requests = new List<LoadingRequest>();
+        public ulong LoadStartTimeUsec = Time.GetTicksUsec();
+    }
+
+    Dictionary<string, MonitoredItem> Monitored = new Dictionary<string, MonitoredItem>();
 
     class CacheEntry
     {
@@ -114,10 +120,10 @@ public partial class ResourceLoadMonitor : Node
 
                 var status = ResourceLoader.LoadThreadedGetStatus(kv.Key);
 
-                if (status != ResourceLoader.ThreadLoadStatus.InProgress)
+                if (status != ResourceLoader.ThreadLoadStatus.InProgress && (status != ResourceLoader.ThreadLoadStatus.InvalidResource || Time.GetTicksUsec() - kv.Value.LoadStartTimeUsec > 5_000_000))
                 {
                     var loadedResource = ResourceLoader.LoadThreadedGet(kv.Key);
-                    foreach (var target in kv.Value)
+                    foreach (var target in kv.Value.Requests)
                     {
                         if (target.ValidityCheckNode.IsInstanceValid() && target.ValidityCheckNode.IsInsideTree())
                         {
@@ -137,7 +143,7 @@ public partial class ResourceLoadMonitor : Node
                             else
                             {
                                 GD.Print($"Failed to load {kv.Key} due to status {status}");
-                                target.ErrorHandler(new Exception($"Unexpected status {status} while loading"));
+                                target.ErrorHandler(new Exception($"Unexpected status {status} while loading {kv.Key}"));
                             }
                         }
                         else
@@ -146,7 +152,7 @@ public partial class ResourceLoadMonitor : Node
                         }
                     }
 
-                    if (kv.Value.Count == 0) GD.PushWarning("Finished loading, but no targets?");
+                    AT.GreaterThan(kv.Value.Requests.Count, 0);
 
                     toRemove.Add(kv.Key);
                 }
@@ -226,7 +232,7 @@ public partial class ResourceLoadMonitor : Node
             target((T)ResourceLoader.LoadThreadedGet(resourcePath));
             return;
         }
-        else if (status != ResourceLoader.ThreadLoadStatus.InvalidResource)
+        else if (status != ResourceLoader.ThreadLoadStatus.InvalidResource && status != ResourceLoader.ThreadLoadStatus.InProgress)
         {
             throw new Exception($"Resource {resourcePath} is in unexpected status {status}");
         }
@@ -243,10 +249,10 @@ public partial class ResourceLoadMonitor : Node
 
         if (!Monitored.ContainsKey(resourcePath))
         {
-            Monitored.Add(resourcePath, new List<LoadingRequest>());
+            Monitored.Add(resourcePath, new MonitoredItem());
         }
 
-        Monitored[resourcePath].Add(new LoadingRequest
+        Monitored[resourcePath].Requests.Add(new LoadingRequest
         {
             ValidityCheckNode = validityCheckNode,
             Target = (trg) => target((T)trg),
@@ -354,7 +360,7 @@ public partial class ResourceLoadMonitor : Node
 
         GD.Print($"ThreadedInstantiateAsync Loading {resourcePath}");
         var loaded = await StartLoadingAsync<PackedScene>(resourcePath, validityCheckNode);
-        //var loaded = GD.Load<PackedScene>(resourcePath);
+
         GD.Print($"ThreadedInstantiateAsync DONE Loading {resourcePath}");
 
         var point2 = DateTime.Now;
