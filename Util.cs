@@ -522,32 +522,49 @@ public static class Util
         }
     }
 
-    private static Random rand = new Random();
+    private static Random _RootRand = new Random();
+
+    [ThreadStatic] private static Random _Rand;
+
+    private static Random Rand
+    {
+        get
+        {
+            if (_Rand == null)
+            {
+                lock (_RootRand)
+                {
+                    _Rand = new Random(_RootRand.Next());
+                }
+            }
+            return _Rand;
+        }
+    }
 
     public static int RandInt(int minInclusive, int maxExclusive)
     {
-        return rand.Next(minInclusive, maxExclusive);
+        return Rand.Next(minInclusive, maxExclusive);
     }
 
     public static long RandLong(long minInclusive, long maxExclusive)
     {
-        return rand.NextInt64(minInclusive, maxExclusive);
+        return Rand.NextInt64(minInclusive, maxExclusive);
     }
 
     public static long RandLong()
     {
-        return rand.NextInt64();
+        return Rand.NextInt64();
     }
 
     [Obsolete("Use Random() instead")]
     public static float random()
     {
-        return (float)rand.NextDouble();
+        return (float)Rand.NextDouble();
     }
 
     public static float Random()
     {
-        return (float)rand.NextDouble();
+        return (float)Rand.NextDouble();
     }
 
     public static float RandF(float min, float max)
