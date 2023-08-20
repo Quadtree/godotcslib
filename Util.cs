@@ -1107,4 +1107,25 @@ public static class Util
     {
         return Mathf.Abs(Vector2.Right.Rotated(angle1).AngleTo(Vector2.Right.Rotated(angle2)));
     }
+
+    // Switches the game to FullScreen borderless. For speed, we use an usafe technique in dev that is faster
+    // but will supposedly crash some GPU drivers.
+    public static void SwitchToFullScreenBorderless()
+    {
+        if (OS.IsDebugBuild())
+        {
+            DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+
+            var size = DisplayServer.ScreenGetSize();
+            var pos = DisplayServer.ScreenGetPosition();
+            GD.Print($"SwitchToFullScreenBorderless: size={size}, pos={pos}");
+
+            DisplayServer.WindowSetSize(size);
+            DisplayServer.WindowSetPosition(pos);
+        }
+        else
+        {
+            DisplayServer.WindowSetMode(DisplayServer.WindowMode.ExclusiveFullscreen);
+        }
+    }
 }

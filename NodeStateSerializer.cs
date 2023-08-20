@@ -9,16 +9,16 @@ using Godot;
 [DataContract]
 public class NodeSaveState
 {
-    [DataMember] public string SceneFilePath;
+    [DataMember(EmitDefaultValue = false)] public string SceneFilePath;
 
-    [DataMember] public Dictionary<string, NodeSaveElement> Data = new Dictionary<string, NodeSaveElement>();
+    [DataMember(EmitDefaultValue = false)] public Dictionary<string, NodeSaveElement> Data = new Dictionary<string, NodeSaveElement>();
 }
 
 [DataContract]
 public class NodeSaveElement
 {
-    [DataMember] public string ScenePath;
-    [DataMember] public Dictionary<string, object> Data;
+    [DataMember(EmitDefaultValue = false)] public string ScenePath;
+    [DataMember(EmitDefaultValue = false)] public Dictionary<string, object> Data;
 }
 
 public class NodeSavable : Attribute

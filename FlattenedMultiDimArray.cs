@@ -9,9 +9,9 @@ using Godot;
 [DataContract(IsReference = true)]
 public class FlattenedMultiDimArray<T>
 {
-    [DataMember] protected List<int> Dimensions;
-    [DataMember] protected T[] _Data;
-    [DataMember] protected byte[] _DataCompressedRaw;
+    [DataMember(EmitDefaultValue = false)] protected List<int> Dimensions;
+    [DataMember(EmitDefaultValue = false)] protected T[] _Data;
+    [DataMember(EmitDefaultValue = false)] protected byte[] _DataCompressedRaw;
 
     public FlattenedMultiDimArray() { }
 

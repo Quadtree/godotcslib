@@ -6,14 +6,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml;
 using Godot;
 
 [DataContract]
 public class SaveLoadMetadata
 {
-    [DataMember] public int Version;
-    [DataMember] public string Filename;
+    [DataMember(EmitDefaultValue = false)] public int Version;
+    [DataMember(EmitDefaultValue = false)] public string Filename;
 }
 
 class XMLSaveLoad<T> : XMLSaveLoadGeneric<T, SaveLoadMetadata> where T : class, new() { }
@@ -24,31 +25,38 @@ class XMLSaveLoadGeneric<T, M>
 {
     private const string SAVE_DIRECTORY = "user://saves";
 
-    public static void Save(T inst, string filename = "default", M customMetadata = null, IEnumerable<Type> extraKnownTypes = null, bool compression = false)
+    public static async Task Save(T inst, string filename = "default", M customMetadata = null, IEnumerable<Type> extraKnownTypes = null, bool compression = false)
     {
+        var startTime = Time.GetTicksUsec();
+
         EnsureDirectoryExists(SAVE_DIRECTORY);
 
         filename = InputNameToPath(filename, compression);
         var tmpFileName = $"{filename}.tmp";
 
+        var memoryStream = new System.IO.MemoryStream();
+        using (var xmlWriter = XmlDictionaryWriter.Create(memoryStream, new XmlWriterSettings
+        {
+            Indent = true,
+            ConformanceLevel = ConformanceLevel.Fragment,
+        }))
+        {
+            if (customMetadata == null) customMetadata = new M();
+            customMetadata.Version = CurrentVersion;
+            MetadataSerializer.WriteObject(xmlWriter, customMetadata);
+            CreateSerializer(extraKnownTypes).WriteObject(xmlWriter, inst);
+        }
+
+        var singleThreadTime = Time.GetTicksUsec();
+
         using (var stream = CompressionWrap(new GodotFileStream(tmpFileName, Godot.FileAccess.ModeFlags.Write), System.IO.Compression.CompressionMode.Compress, compression))
         {
-            using (var xmlWriter = XmlDictionaryWriter.Create(stream, new XmlWriterSettings
-            {
-                Indent = true,
-                ConformanceLevel = ConformanceLevel.Fragment,
-            }))
-            {
-                if (customMetadata == null) customMetadata = new M();
-                customMetadata.Version = CurrentVersion;
-                MetadataSerializer.WriteObject(xmlWriter, customMetadata);
-                CreateSerializer(extraKnownTypes).WriteObject(xmlWriter, inst);
-            }
+            await stream.WriteAsync(memoryStream.GetBuffer(), 0, (int)memoryStream.Position);
         }
 
         RenameUserFile(tmpFileName, filename);
 
-        GD.Print("Save successful");
+        GD.Print($"Save to {filename} completed in {(Time.GetTicksUsec() - startTime) / 1_000.0:N0}ms singleThreadTime={(singleThreadTime - startTime) / 1_000.0:N0}ms");
     }
 
     static DataContractSerializer MetadataSerializer => new DataContractSerializer(typeof(M));
@@ -247,7 +255,12 @@ class XMLSaveLoadGeneric<T, M>
 
     private static System.IO.Stream CompressionWrap(System.IO.Stream stream, System.IO.Compression.CompressionMode mode, bool compression)
     {
-        return compression ? new System.IO.Compression.GZipStream(stream, mode) : stream;
+        if (!compression)
+            return stream;
+        else if (mode == System.IO.Compression.CompressionMode.Decompress)
+            return new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionMode.Decompress);
+        else
+            return new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionLevel.SmallestSize);
     }
 
     public static int CurrentVersion => (Attribute.GetCustomAttribute(typeof(T), typeof(HasVersion)) as HasVersion)?.VERSION ?? 0;
