@@ -633,9 +633,9 @@ public static class Util
             var parent = node.GetParentOrNull<Node>();
 
             if (parent == null) return default(T);
-            if (parent is T)
+            if (parent is T typedParent)
             {
-                return (T)(object)node.GetParentOrNull<Node>();
+                return typedParent;
             }
             node = parent;
         }
@@ -648,9 +648,24 @@ public static class Util
             var parent = node.GetParentOrNull<Node>();
 
             if (parent == null) return default(T);
-            if (parent is T && parent.Name == name)
+            if (parent is T typedParent && parent.Name == name)
             {
-                return (T)(object)node.GetParentOrNull<Node>();
+                return typedParent;
+            }
+            node = parent;
+        }
+    }
+
+    public static T FindParentByPredicate<T>(this Node node, Func<T, bool> predicate)
+    {
+        while (true)
+        {
+            var parent = node.GetParentOrNull<Node>();
+
+            if (parent == null) return default(T);
+            if (parent is T typedParent && predicate(typedParent))
+            {
+                return typedParent;
             }
             node = parent;
         }
