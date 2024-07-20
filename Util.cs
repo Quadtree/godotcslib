@@ -1120,7 +1120,12 @@ public static class Util
 
     public static float AbsoluteAngleBetween(float angle1, float angle2)
     {
-        return Mathf.Abs(Vector2.Right.Rotated(angle1).AngleTo(Vector2.Right.Rotated(angle2)));
+        return Mathf.Abs(AngleBetween(angle1, angle2));
+    }
+
+    public static float AngleBetween(float angle1, float angle2)
+    {
+        return Vector2.Right.Rotated(angle1).AngleTo(Vector2.Right.Rotated(angle2));
     }
 
     // Switches the game to FullScreen borderless. For speed, we use an usafe technique in dev that is faster
@@ -1142,5 +1147,16 @@ public static class Util
         {
             DisplayServer.WindowSetMode(DisplayServer.WindowMode.ExclusiveFullscreen);
         }
+    }
+
+    public static void ScaleMainWindow(float factor)
+    {
+        var origSize = DisplayServer.WindowGetSize();
+        var newSize = new Vector2I(
+            Mathf.RoundToInt(origSize.X * factor),
+            Mathf.RoundToInt(origSize.Y * factor)
+        );
+        DisplayServer.WindowSetSize(newSize);
+        DisplayServer.WindowSetPosition(DisplayServer.WindowGetPosition() - (newSize - origSize) / 2);
     }
 }

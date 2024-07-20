@@ -55,7 +55,7 @@ public class AStarIndexed<T> where T : IEquatable<T>, IComparable<T>
         }
     }
 
-    public IList<T> FindPath(T startNode, T endNode, Func<T, bool> conclusionValidator = null, ulong? maxMoveCost = null, long? maxIteration = null, float? timeLimit = null)
+    public IList<T> FindPath(T startNode, T endNode, Func<T, bool> conclusionValidator = null, ulong? maxMoveCost = null, long? maxIteration = null, float? timeLimit = null, float? hardCutoffTime = null)
     {
         SortedSet<PathingNode> Open = new SortedSet<PathingNode>();
         HashSet<PathingNode> Closed = new HashSet<PathingNode>();
@@ -70,8 +70,12 @@ public class AStarIndexed<T> where T : IEquatable<T>, IComparable<T>
 
         long iteration = 0;
 
+        var startTime = Time.GetTicksUsec();
+
         while (Open.Count > 0 && iteration < (maxIteration ?? long.MaxValue))
         {
+            if (hardCutoffTime != null && Time.GetTicksUsec() - startTime > hardCutoffTime.Value * 1_000_000) return null;
+
             AT.TimeLimit(Open, limitSeconds: timeLimit);
             var next = Open.First();
             Open.Remove(next);
