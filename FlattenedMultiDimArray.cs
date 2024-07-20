@@ -59,14 +59,21 @@ public class FlattenedMultiDimArray<T>
     {
         get
         {
-            if (typeof(T) == typeof(float)) return sizeof(float);
-            if (typeof(T) == typeof(bool)) return sizeof(bool);
-            if (typeof(T) == typeof(byte)) return sizeof(byte);
-            if (typeof(T) == typeof(double)) return sizeof(double);
-            if (typeof(T) == typeof(int)) return sizeof(int);
-            if (typeof(T) == typeof(long)) return sizeof(long);
-            if (typeof(T) == typeof(ushort)) return sizeof(ushort);
-            if (typeof(T) == typeof(short)) return sizeof(short);
+            var theType = typeof(T);
+
+            if (theType.IsEnum)
+            {
+                theType = theType.GetEnumUnderlyingType();
+            }
+
+            if (theType == typeof(float)) return sizeof(float);
+            if (theType == typeof(bool)) return sizeof(bool);
+            if (theType == typeof(byte)) return sizeof(byte);
+            if (theType == typeof(double)) return sizeof(double);
+            if (theType == typeof(int)) return sizeof(int);
+            if (theType == typeof(long)) return sizeof(long);
+            if (theType == typeof(ushort)) return sizeof(ushort);
+            if (theType == typeof(short)) return sizeof(short);
 
             return -1;
         }
@@ -76,7 +83,7 @@ public class FlattenedMultiDimArray<T>
     {
         get
         {
-            if (PrimitiveElementSize != -1)
+            if (_Data == null)
             {
                 var byteArray = Decompress(_DataCompressedRaw);
                 var ret = new T[byteArray.Length / PrimitiveElementSize];

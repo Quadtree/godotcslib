@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Godot;
 
 #pragma warning disable
 
@@ -66,7 +67,10 @@ public static class SameThreadContinuation
         }
         catch (Exception err)
         {
-            if (errorHandler != null) errorHandler(err);
+            if (errorHandler != null)
+                errorHandler(err);
+            else
+                GD.PushError(err.ToString());
         }
     }
 }

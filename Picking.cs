@@ -70,4 +70,13 @@ public static class Picking
     {
         return cam.GetViewport().CanvasTransform * point;
     }
+
+    public static Vector2? WorldPositionToScreenPosition(Node ctx, Vector3 worldPos)
+    {
+        var cam = ctx.GetViewport().GetCamera3D();
+        if (!cam.IsPositionBehind(worldPos))
+            return cam.UnprojectPosition(worldPos);
+        else
+            return null;
+    }
 }
