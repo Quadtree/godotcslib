@@ -30,11 +30,6 @@ public static class SameThreadContinuation
         if (callback != null) callback(data);
     }
 
-    public static void Then<T>(this Task<T> task, Action<T> callback, Action<string> errorHandler = null)
-    {
-        _Then(task, callback, err => errorHandler?.Invoke(err?.ToString()));
-    }
-
     public static void Then<T>(this Task<T> task, Action<T> callback, Action<Exception> errorHandler = null)
     {
         _Then(task, callback, errorHandler);
@@ -49,7 +44,10 @@ public static class SameThreadContinuation
         }
         catch (Exception err)
         {
-            if (errorHandler != null) errorHandler(err);
+            if (errorHandler != null)
+                errorHandler(err);
+            else
+                GD.PushError(err);
         }
     }
 

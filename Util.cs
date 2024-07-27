@@ -163,6 +163,28 @@ public static class Util
         }
     }
 
+    public static IEnumerable<T> FindChildrenByPredicate<T>(this Node node, Func<T, bool> predicate, int maxRecursionDepth = 10) where T : class
+    {
+        var c = node.GetChildCount();
+        for (int i = 0; i < c; ++i)
+        {
+            var n = node.GetChild(i);
+
+            if (n is T typedNode)
+            {
+                if (predicate(typedNode)) yield return typedNode;
+            }
+
+            if (maxRecursionDepth > 0)
+            {
+                foreach (var nn in n.FindChildrenByPredicate<T>(predicate, maxRecursionDepth - 1))
+                {
+                    yield return nn;
+                }
+            }
+        }
+    }
+
     private static ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<string, Node>> findChildByNameCache = new ConditionalWeakTable<Node, System.Collections.Generic.Dictionary<string, Node>>();
 
     public static T FindChildByName<T>(this Node node, string name, int maxRecursionDepth = 10, Node initialNode = null) where T : Node
@@ -674,7 +696,7 @@ public static class Util
     public static void SpawnOneShotParticleSystem2D(string system, Node contextNode, Vector2 location)
     {
         ResourceLoadMonitor.ThreadedInstantiateAsync<GpuParticles2D>(system, contextNode)
-            .Then(res => SpawnOneShotParticleSystem2D(res, contextNode, location), GD.PushError);
+            .Then(res => SpawnOneShotParticleSystem2D(res, contextNode, location));
     }
 
     public static void SpawnOneShotParticleSystem2D(GpuParticles2D particles, Node contextNode, Vector2 location)
@@ -933,6 +955,11 @@ public static class Util
     }
 
     public static int Square(int n)
+    {
+        return n * n;
+    }
+
+    public static float Square(float n)
     {
         return n * n;
     }

@@ -17,9 +17,9 @@ public class SaveLoadMetadata
     [DataMember(EmitDefaultValue = false)] public string Filename;
 }
 
-class XMLSaveLoad<T> : XMLSaveLoadGeneric<T, SaveLoadMetadata> where T : class, new() { }
+public class XMLSaveLoad<T> : XMLSaveLoadGeneric<T, SaveLoadMetadata> where T : class, new() { }
 
-class XMLSaveLoadGeneric<T, M>
+public class XMLSaveLoadGeneric<T, M>
     where T : class, new()
     where M : SaveLoadMetadata, new()
 {
@@ -164,12 +164,12 @@ class XMLSaveLoadGeneric<T, M>
 
     public static void Rename(string src, string dest)
     {
-        RenameUserFile(src, dest);
+        RenameUserFile(InputNameToPath(src), InputNameToPath(dest));
     }
 
     public static void Delete(string filename = "default")
     {
-        DeleteUserFile(filename);
+        DeleteUserFile(InputNameToPath(filename));
     }
 
     public static bool Exists(string filename)
