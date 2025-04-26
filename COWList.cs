@@ -106,7 +106,7 @@ public class COWList<T> : IReadOnlyList<T>, IEnumerable<T>, IReadOnlyCollection<
         };
     }
 
-    public COWList<T> ReplaceAt(T obj, int idx)
+    public COWList<T> ReplaceAt(int idx, T obj)
     {
         var dataCopy = Data.ToArray();
         dataCopy[idx] = obj;
@@ -116,6 +116,20 @@ public class COWList<T> : IReadOnlyList<T>, IEnumerable<T>, IReadOnlyCollection<
     public COWList<T> WithSettings(SettingsType settings)
     {
         return new COWList<T> { Data = Data, Settings = settings };
+    }
+
+    public int IndexOf(T obj)
+    {
+        for (var i = 0; i < Data.Length; ++i) if (Data[i]?.Equals(obj) == true || (Data[i] == null && obj == null)) return i;
+
+        return -1;
+    }
+
+    public COWList<T> Replace(T oldObject, T newObject)
+    {
+        var idx = IndexOf(oldObject);
+        if (idx != -1) return ReplaceAt(idx, newObject);
+        return this;
     }
 
     public static readonly COWList<T> Empty = new();
