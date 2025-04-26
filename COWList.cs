@@ -7,6 +7,12 @@ using System.Runtime.Serialization;
 [DataContract]
 public class COWList<T> : IReadOnlyList<T>, IEnumerable<T>, IReadOnlyCollection<T>
 {
+    public class SettingsType
+    {
+        public bool DoNotAllowDuplicates { get; init; } = false;
+        public bool FailedRemovalIsError { get; init; } = false;
+    }
+
     [DataMember(EmitDefaultValue = false)] private T[] Data = Array.Empty<T>();
 
     public T this[int index] => Data[index];
@@ -14,6 +20,8 @@ public class COWList<T> : IReadOnlyList<T>, IEnumerable<T>, IReadOnlyCollection<
     public int Count => Data.Length;
 
     public bool IsReadOnly => true;
+
+    [DataMember(EmitDefaultValue = false)] public SettingsType Settings { get; init; }
 
     public COWList(IEnumerable<T> col)
     {
@@ -39,37 +47,62 @@ public class COWList<T> : IReadOnlyList<T>, IEnumerable<T>, IReadOnlyCollection<
 
     public static COWList<T> operator +(COWList<T> self, T other)
     {
+        if (self.Settings?.DoNotAllowDuplicates == true && self.Contains(other)) throw new ArgumentException("This element is already in the list and duplicates are not allowed");
+
         return new COWList<T>
         {
-            Data = self.Data.Append(other).ToArray()
+            Data = self.Data.Append(other).ToArray(),
+            Settings = self.Settings,
         };
     }
 
     public static COWList<T> operator +(COWList<T> self, IEnumerable<T> other)
     {
+        if (self.Settings?.DoNotAllowDuplicates == true && self.Data.Intersect(other).Any()) throw new ArgumentException("This element is already in the list and duplicates are not allowed");
+
         return new COWList<T>
         {
-            Data = self.Data.Concat(other).ToArray()
+            Data = self.Data.Concat(other).ToArray(),
+            Settings = self.Settings,
         };
     }
 
     public static COWList<T> operator -(COWList<T> self, T other)
     {
         var tmp = self.Data.ToList();
-        tmp.Remove(other);
-        return new COWList<T>
+        if (tmp.Remove(other))
         {
-            Data = tmp.ToArray(),
-        };
+            return new COWList<T>
+            {
+                Data = tmp.ToArray(),
+                Settings = self.Settings,
+            };
+        }
+        else
+        {
+            if (self.Settings?.FailedRemovalIsError == true) throw new Exception($"Tried to remove {other}, but it was not on the list");
+            return self;
+        }
     }
 
     public static COWList<T> operator -(COWList<T> self, IEnumerable<T> other)
     {
+        if (self.Settings?.FailedRemovalIsError == true)
+        {
+            var foundInList = other.Count(it => self.Contains(it));
+
+            if (foundInList != other.Count())
+            {
+                throw new Exception($"Tried to remove {other}, but one or more elements were not on the list");
+            }
+        }
+
         var tmp = self.Data.ToList();
         tmp.RemoveAll(it => other.Contains(it));
         return new COWList<T>
         {
             Data = tmp.ToArray(),
+            Settings = self.Settings,
         };
     }
 
@@ -77,7 +110,12 @@ public class COWList<T> : IReadOnlyList<T>, IEnumerable<T>, IReadOnlyCollection<
     {
         var dataCopy = Data.ToArray();
         dataCopy[idx] = obj;
-        return new COWList<T> { Data = dataCopy };
+        return new COWList<T> { Data = dataCopy, Settings = Settings };
+    }
+
+    public COWList<T> WithSettings(SettingsType settings)
+    {
+        return new COWList<T> { Data = Data, Settings = settings };
     }
 
     public static readonly COWList<T> Empty = new();

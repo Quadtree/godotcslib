@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Serialization;
 using Godot;
+using Godot.NativeInterop;
 
 [DataContract(IsReference = true)]
 public class FlattenedMultiDimArray<T>
@@ -12,6 +14,7 @@ public class FlattenedMultiDimArray<T>
     [DataMember(EmitDefaultValue = false)] protected List<int> Dimensions;
     [DataMember(EmitDefaultValue = false)] protected T[] _Data;
     [DataMember(EmitDefaultValue = false)] protected byte[] _DataCompressedRaw;
+    [DataMember(EmitDefaultValue = false)] protected uint _DataCompressedRawChecksum;
 
     public FlattenedMultiDimArray() { }
 
@@ -86,6 +89,11 @@ public class FlattenedMultiDimArray<T>
             if (_Data == null)
             {
                 var byteArray = Decompress(_DataCompressedRaw);
+
+                var byteArrayChecksum = HashBytes(byteArray);
+                if (byteArrayChecksum != _DataCompressedRawChecksum)
+                    GD.PushError($"Unserialized and uncompressed data hash does not match! Expected: {_DataCompressedRawChecksum} Actual: {byteArrayChecksum}");
+
                 var ret = new T[byteArray.Length / PrimitiveElementSize];
                 Buffer.BlockCopy(byteArray, 0, ret, 0, byteArray.Length);
                 return ret;
@@ -98,6 +106,7 @@ public class FlattenedMultiDimArray<T>
             {
                 var byteArray = new byte[PrimitiveElementSize * value.Length];
                 Buffer.BlockCopy(value, 0, byteArray, 0, byteArray.Length);
+                _DataCompressedRawChecksum = HashBytes(byteArray);
                 _DataCompressedRaw = Compress(byteArray);
             }
             else _Data = value;
@@ -155,12 +164,17 @@ public class FlattenedMultiDimArray<T>
     {
         var compressedStream = new MemoryStream();
         var compressor = new DeflateStream(compressedStream, CompressionMode.Compress);
-        compressor.Write(decompressedByteArray, 0, decompressedByteArray.Length);
+        compressor.Write(decompressedByteArray);
         compressor.Close();
 
         var ret = compressedStream.ToArray();
-        if ((decompressedByteArray.Length > 0 && ret.Length <= 0) || Enumerable.SequenceEqual(decompressedByteArray, ret)) throw new Exception();
-        //GD.Print($"{decompressedByteArray.Length} DEFLATE {ret.Length}");
+
+        if (OS.IsDebugBuild())
+        {
+            var decompressionVerification = Decompress(ret);
+            if (!Enumerable.SequenceEqual(decompressedByteArray, decompressionVerification)) GD.PushError("Inconsistency on saving!");
+        }
+
         return ret;
     }
 
@@ -168,16 +182,19 @@ public class FlattenedMultiDimArray<T>
     {
         var decompressedStream = new MemoryStream(compressedByteArray);
         var decompressor = new DeflateStream(decompressedStream, CompressionMode.Decompress);
+        var ret = new MemoryStream();
+        decompressor.CopyTo(ret);
 
-        var ret = new List<byte[]>();
-        int numRead = 0;
+        return ret.ToArray();
+    }
 
-        do
-        {
-            ret.Add(new byte[4096]);
-        }
-        while ((numRead = decompressor.Read(ret.Last(), 0, ret.Last().Length)) > 0);
+    static uint HashBytes(byte[] toHash)
+    {
+        var hashingContext = new HashingContext();
+        hashingContext.Start(HashingContext.HashType.Sha1);
+        hashingContext.Update(toHash);
+        var hashBytes = hashingContext.Finish();
 
-        return ret.SelectMany(it => it).ToArray();
+        return BitConverter.ToUInt32(hashBytes);
     }
 }
