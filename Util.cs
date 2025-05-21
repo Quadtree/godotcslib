@@ -1186,4 +1186,15 @@ public static class Util
         DisplayServer.WindowSetSize(newSize);
         DisplayServer.WindowSetPosition(DisplayServer.WindowGetPosition() - (newSize - origSize) / 2);
     }
+
+    public static IEnumerable<R> SelectByType<R>(this IEnumerable<object> input)
+    {
+        foreach (var it in input)
+        {
+            if (it is R typed)
+            {
+                yield return typed;
+            }
+        }
+    }
 }
