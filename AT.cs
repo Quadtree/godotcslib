@@ -95,6 +95,13 @@ public static class AT
 #endif
     }
 
+    public static void Success(Error resp, bool crit = false)
+    {
+#if TOOLS
+        if (resp != Error.Ok) Failed($"Expected OK, message was {resp} instead", crit);
+#endif
+    }
+
     public static void OnMainThread(bool crit = false)
     {
 #if TOOLS
