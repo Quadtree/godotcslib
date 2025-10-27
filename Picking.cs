@@ -2,24 +2,32 @@ using Godot;
 
 public static class Picking
 {
-    class PickResult
+    public class PickResult
     {
         public Vector3? Pos;
         public PhysicsBody3D Hit;
+
+        public override string ToString()
+        {
+            return $"PickResult({Pos}, {Hit})";
+        }
     }
 
-    private static PickResult PickAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384)
+    public static PickResult PickAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384, Viewport viewport = null, Camera3D cam = null, bool drawDebugLine = false)
     {
-        var cam = ctx.GetViewport().GetCamera3D();
+        cam ??= ctx.GetViewport().GetCamera3D();
+        viewport ??= ctx.GetViewport();
 
-        var raySrc = cam.ProjectRayOrigin(ctx.GetViewport().GetMousePosition());
-        var rayNorm = cam.ProjectRayNormal(ctx.GetViewport().GetMousePosition());
+        var raySrc = cam.ProjectRayOrigin(viewport.GetMousePosition());
+        var rayNorm = cam.ProjectRayNormal(viewport.GetMousePosition());
         var rayTo = raySrc + rayNorm * dist;
 
         var fp = new PhysicsRayQueryParameters3D();
         fp.From = raySrc;
         fp.To = rayTo;
         fp.CollisionMask = collisionMask;
+
+        if (drawDebugLine) DebugShapes.DrawDebugLine(ctx, fp.From, fp.To);
 
         var curPos = ctx.GetWorld3D().DirectSpaceState.IntersectRay(fp);
 
@@ -34,17 +42,17 @@ public static class Picking
         return ret;
     }
 
-    public static Vector3? PickPointAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384)
+    public static Vector3? PickPointAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384, Viewport viewport = null, Camera3D cam = null, bool drawDebugLine = false)
     {
-        return PickAtCursor(ctx, dist, collisionMask).Pos;
+        return PickAtCursor(ctx, dist, collisionMask: collisionMask, viewport: viewport, cam: cam, drawDebugLine: drawDebugLine).Pos;
     }
 
-    public static PhysicsBody3D PickObjectAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384)
+    public static PhysicsBody3D PickObjectAtCursor(Node3D ctx, float dist = 10000, uint collisionMask = 16384, Viewport viewport = null, Camera3D cam = null, bool drawDebugLine = false)
     {
-        return PickAtCursor(ctx, dist, collisionMask).Hit;
+        return PickAtCursor(ctx, dist, collisionMask: collisionMask, viewport: viewport, cam: cam, drawDebugLine: drawDebugLine).Hit;
     }
 
-    public static Vector3? PickPlaneAtCursorAtLevel(Node3D ctx, float level, Viewport viewport = null)
+    public static Vector3? PickPlaneAtCursorAtLevel(Node3D ctx, float level, Viewport viewport = null, Camera3D cam = null)
     {
         var plane = new Plane(
             new Vector3(0, level, 0),
@@ -52,9 +60,12 @@ public static class Picking
             new Vector3(1, level, 1)
         );
 
-        if (viewport == null) viewport = ctx.GetViewport();
+        viewport ??= ctx.GetViewport();
+        cam ??= viewport.GetCamera3D();
 
-        var cam = viewport.GetCamera3D();
+        AT.NotNull(cam);
+        AT.NotNull(viewport);
+
         var raySrc = cam.ProjectRayOrigin(viewport.GetMousePosition());
         var rayNorm = cam.ProjectRayNormal(viewport.GetMousePosition());
 

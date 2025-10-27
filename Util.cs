@@ -1197,4 +1197,72 @@ public static class Util
             }
         }
     }
+
+    public static string ToStringRecursive(object obj)
+    {
+        return _ToStringRecursive(obj, new HashSet<object>());
+    }
+
+    private static string _ToStringRecursive(object obj, HashSet<object> seen)
+    {
+        if (seen.Contains(obj))
+        {
+            return "<loop>";
+        }
+        else if (obj is string str)
+        {
+            return str;
+        }
+        else if (obj is System.Collections.IEnumerable ien)
+        {
+            var strings = new List<string>();
+
+            foreach (var it in ien)
+            {
+                strings.Add(_ToStringRecursive(it, seen));
+            }
+
+            return $"[{string.Join(", ", strings)}]";
+        }
+        else if (obj == null)
+        {
+            return "null";
+        }
+        else if (obj.GetType().IsPrimitive)
+        {
+            return $"{obj}";
+        }
+        else
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(obj.GetType());
+            sb.Append("(");
+
+            var strings = new List<string>();
+
+            foreach (var prop in obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (prop.GetMethod.GetParameters().Length != 0) continue;
+
+                try
+                {
+                    strings.Add(_ToStringRecursive(prop.GetValue(obj), seen));
+                }
+                catch (Exception err)
+                {
+                    GD.Print($"Error fetching {prop.Name} from {obj.GetType()} (n={prop.GetMethod.GetParameters().Length}): {err}");
+                }
+            }
+
+            foreach (var prop in obj.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                strings.Add(_ToStringRecursive(prop.GetValue(obj), seen));
+            }
+
+            sb.Append(string.Join(", ", strings));
+            sb.Append(")");
+
+            return sb.ToString();
+        }
+    }
 }
